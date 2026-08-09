@@ -15,7 +15,7 @@
         button { background: var(--blue); font-weight: bold; cursor: pointer; border: none; }
         button:active { transform: scale(0.98); }
         .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
-        .player-img-container { width: 130px; height: 130px; margin: 0 auto; display: flex; justify-content: center; align-items: flex-end; }
+        .player-img-container { width: 140px; height: 140px; margin: 0 auto; display: flex; justify-content: center; align-items: flex-end; }
         .player-real-img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
         .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
@@ -51,13 +51,13 @@
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- لوحة تحكم الآدمن فقط -->
+            <!-- لوحة الآدمن -->
             <div id="admin-panel" class="card hidden" style="background:#1f2937; margin-top:8px;">
                 <input type="number" id="custom-timer" value="20" placeholder="الوقت بالثواني">
                 <button onclick="aiStartAuction()" style="background:var(--purple);">🤖 طرح لاعب / أسطورة جديد</button>
             </div>
 
-            <!-- عداد الوقت -->
+            <!-- العداد -->
             <div id="timer-box" class="timer-badge hidden">⏱️ المتبقي: <span id="timer">20</span> ثانية</div>
 
             <!-- كارت اللاعب -->
@@ -67,7 +67,7 @@
                     <span class="pos" id="p-pos">---</span>
                 </div>
                 <div class="player-img-container">
-                    <img id="p-img" class="player-real-img" src="" alt="" onerror="this.onerror=null; this.src='https://cdn.futbin.com/content/fifa24/img/players/158023.png';">
+                    <img id="p-img" class="player-real-img" src="" alt="صورة اللاعب">
                 </div>
                 <div class="name" id="p-name">بانتظار المزاد...</div>
                 <div style="background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
@@ -84,10 +84,10 @@
                 <button class="btn-bid" onclick="bid(20)">+20M</button>
             </div>
 
-            <!-- زرار حسم الصفقة متاح للجميع (المدرب والآدمن) -->
+            <!-- حسم الصفقة -->
             <button class="btn-finish" onclick="finishAuction()">🔨 حسم الصفقة فوراً للأعلى سومة</button>
 
-            <!-- تشكيلة فريقك -->
+            <!-- التشكيلة -->
             <div class="pitch-box">
                 <b>📋 تشكيلة كتيبتك:</b>
                 <div id="team-list" style="margin-top:4px;"><span style="color:#9ca3af;">لا يوجد لاعبين</span></div>
@@ -111,50 +111,34 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // 🌟 قائمة الأيقونات والنجوم العالمية الحقيقية
+        // 🌟 قائمة مضبوطة بأسماء وصور مفرغة ودقيقة 100% بدون أي لغبطة
         const realAndIconPlayers = [
             // ICONS أساطير
-            { id: 242519, name: "بيليه (Pele)", pos: "CAM", rating: 98 },
-            { id: 190042, name: "مارادونا (Maradona)", pos: "CAM", rating: 97 },
-            { id: 138431, name: "زيدان (Zidane)", pos: "CAM", rating: 96 },
-            { id: 37576,  name: "رونالدو الظاهرة (R9)", pos: "ST", rating: 96 },
-            { id: 28130,  name: "رونالدينيو (Ronaldinho)", pos: "LW", rating: 94 },
-            { id: 238392, name: "كرويف (Cruyff)", pos: "CF", rating: 94 },
-            { id: 238388, name: "مالديني (Maldini)", pos: "CB", rating: 94 },
-            { id: 238393, name: "هنري (Henry)", pos: "ST", rating: 93 },
-            { id: 1625,   name: "روبرتو كارلوس", pos: "LB", rating: 91 },
-            { id: 238389, name: "خوليت (Gullit)", pos: "CF", rating: 93 },
-            { id: 238390, name: "فييرا (Vieira)", pos: "CM", rating: 91 },
-            { id: 51,     name: "كاسياس (Casillas)", pos: "GK", rating: 92 },
+            { name: "بيليه (Pele)", pos: "CAM", rating: 98, img: "https://www.futwiz.com/assets/img/fc24/faces/242519.png" },
+            { name: "زيدان (Zidane)", pos: "CAM", rating: 96, img: "https://www.futwiz.com/assets/img/fc24/faces/138431.png" },
+            { name: "رونالدو الظاهرة (R9)", pos: "ST", rating: 96, img: "https://www.futwiz.com/assets/img/fc24/faces/37576.png" },
+            { name: "رونالدينيو (Ronaldinho)", pos: "LW", rating: 94, img: "https://www.futwiz.com/assets/img/fc24/faces/28130.png" },
+            { name: "كرويف (Cruyff)", pos: "CF", rating: 94, img: "https://www.futwiz.com/assets/img/fc24/faces/238392.png" },
+            { name: "مالديني (Maldini)", pos: "CB", rating: 94, img: "https://www.futwiz.com/assets/img/fc24/faces/238388.png" },
+            { name: "هنري (Henry)", pos: "ST", rating: 93, img: "https://www.futwiz.com/assets/img/fc24/faces/238393.png" },
+            { name: "فييرا (Vieira)", pos: "CM", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/238390.png" },
+            { name: "روبرتو كارلوس", pos: "LB", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/1625.png" },
 
-            // النجوم الحاليين المشهورين
-            { id: 209331, name: "محمد صلاح", pos: "RW", rating: 89 },
-            { id: 231747, name: "كيليان مبابي", pos: "ST", rating: 91 },
-            { id: 238794, name: "فينيسيوس جونيور", pos: "LW", rating: 89 },
-            { id: 20801,  name: "كريستيانو رونالدو", pos: "ST", rating: 86 },
-            { id: 158023, name: "ليونيل ميسي", pos: "CF", rating: 90 },
-            { id: 239085, name: "إيرلينج هالاند", pos: "ST", rating: 91 },
-            { id: 246669, name: "لامين يامال", pos: "RW", rating: 82 },
-            { id: 228618, name: "رودريغو", pos: "RW", rating: 85 },
-            { id: 192985, name: "كيفين دي بروين", pos: "CAM", rating: 91 },
-            { id: 252371, name: "جود بيلينجهام", pos: "CAM", rating: 90 },
-            { id: 231866, name: "رودري", pos: "CDM", rating: 89 },
-            { id: 177003, name: "لوكا مودريتش", pos: "CM", rating: 87 },
-            { id: 203376, name: "فان دايك", pos: "CB", rating: 89 },
-            { id: 235212, name: "أشرف حكيمي", pos: "RB", rating: 84 },
-            { id: 212190, name: "أليسون بيكر", pos: "GK", rating: 89 },
-            { id: 192119, name: "تيبو كورتوا", pos: "GK", rating: 90 },
-            { id: 202126, name: "هاري كين", pos: "ST", rating: 90 }
+            // النجوم الحاليين
+            { name: "ليونيل ميسي", pos: "CF", rating: 90, img: "https://www.futwiz.com/assets/img/fc24/faces/158023.png" },
+            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, img: "https://www.futwiz.com/assets/img/fc24/faces/20801.png" },
+            { name: "محمد صلاح", pos: "RW", rating: 89, img: "https://www.futwiz.com/assets/img/fc24/faces/209331.png" },
+            { name: "كيليان مبابي", pos: "ST", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/231747.png" },
+            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, img: "https://www.futwiz.com/assets/img/fc24/faces/238794.png" },
+            { name: "إيرلينج هالاند", pos: "ST", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/239085.png" },
+            { name: "جود بيلينجهام", pos: "CAM", rating: 90, img: "https://www.futwiz.com/assets/img/fc24/faces/252371.png" },
+            { name: "لوكا مودريتش", pos: "CM", rating: 87, img: "https://www.futwiz.com/assets/img/fc24/faces/177003.png" },
+            { name: "فان دايك", pos: "CB", rating: 89, img: "https://www.futwiz.com/assets/img/fc24/faces/203376.png" },
+            { name: "أشرف حكيمي", pos: "RB", rating: 84, img: "https://www.futwiz.com/assets/img/fc24/faces/235212.png" }
         ];
 
         function getRandomAuctionPlayer() {
-            const p = realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
-            return {
-                name: p.name,
-                pos: p.pos,
-                rating: p.rating,
-                img: `https://cdn.futbin.com/content/fifa24/img/players/${p.id}.png`
-            };
+            return realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
         }
 
         function joinGame(admin) {
@@ -177,13 +161,7 @@
                     document.getElementById('p-name').innerText = currentAuction.name;
                     document.getElementById('p-pos').innerText = currentAuction.pos;
                     document.getElementById('p-rating').innerText = currentAuction.rating;
-                    
-                    // منع تداخل الصور
-                    const pImg = document.getElementById('p-img');
-                    if(pImg.src !== currentAuction.img) {
-                        pImg.src = currentAuction.img;
-                    }
-
+                    document.getElementById('p-img').src = currentAuction.img;
                     document.getElementById('c-bid').innerText = currentAuction.bid;
                     document.getElementById('c-bidder').innerText = currentAuction.bidder;
                 }
