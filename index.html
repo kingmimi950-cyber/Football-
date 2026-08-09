@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم الأسطوري - Ultimate Star Auction</title>
+    <title>مزاد النجوم الأسطوري - Trade & Ultimate Auction</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
@@ -24,7 +24,7 @@
             text-align: center;
         }
 
-        .container { max-width: 650px; margin: 0 auto; }
+        .container { max-width: 680px; margin: 0 auto; }
 
         .card {
             background: var(--card-dark);
@@ -88,7 +88,7 @@
             border-radius: 16px;
             padding: 15px;
             margin-top: 15px;
-            min-height: 200px;
+            min-height: 180px;
         }
 
         .pitch-grid {
@@ -107,6 +107,16 @@
             text-align: right;
         }
 
+        .news-ticker {
+            background: #1e1b4b; color: #facc15; padding: 10px; border-radius: 10px;
+            font-size: 14px; font-weight: bold; margin-bottom: 10px; overflow: hidden; white-space: nowrap;
+            border: 1px solid #6366f1;
+        }
+
+        .trade-box {
+            background: #1e293b; border: 1px solid #3b82f6; padding: 15px; border-radius: 14px; margin-top: 15px; text-align: right;
+        }
+
         .hidden { display: none; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -117,14 +127,17 @@
     <div class="container">
         <h2>⚽ مزاد النجوم الأسطوري</h2>
 
+        <!-- شريط الأخبار والتعليق -->
+        <div id="news-ticker" class="news-ticker">🎙️ مرحباً بكم في سوق الانتقالات والمزادات!</div>
+
         <!-- 1. شاشة الدخول -->
         <div id="setup-screen" class="card">
             <h3>🎮 انضمام للغرفة</h3>
             <input type="text" id="username" placeholder="اسم المدرب (اسمك)">
             <input type="text" id="room-code" placeholder="كود الغرفة (مثال: 999)">
             
-            <div id="budget-input-box" style="margin-top:10px;">
-                <label style="font-size:13px; color:#9ca3af;">الميزانية للكل (حدد الميزانية التي تريدها):</label>
+            <div id="admin-budget-box" style="margin-top:10px;">
+                <label style="font-size:13px; color:#9ca3af;">الميزانية الموحدة للجميع (للآدمن فقط):</label>
                 <input type="number" id="start-budget" value="200" placeholder="الميزانية بالمليون">
             </div>
 
@@ -152,36 +165,32 @@
                         <option value="إيرلينج هالاند|ST|91|0">إيرلينج هالاند (91)</option>
                         <option value="محمد صلاح|RW|90|0">محمد صلاح (90)</option>
                         <option value="فينيسيوس جونيور|LW|89|0">فينيسيوس جونيور (89)</option>
-                        <option value="نيمار جونيور|LW|89|0">نيمار جونيور (89)</option>
                     </optgroup>
                     <optgroup label="🧠 خط الوسط (CM / CAM / CDM)">
                         <option value="كيفين دي بروين|CAM|91|0">كيفين دي بروين (91)</option>
                         <option value="جود بيلينجهام|CM|90|0">جود بيلينجهام (90)</option>
                         <option value="رودري|CDM|89|0">رودري (89)</option>
-                        <option value="لوكا مودريتش|CM|87|0">لوكا مودريتش (87)</option>
                     </optgroup>
                     <optgroup label="🛡️ الدفاع والحراس (CB / RB / LB / GK)">
                         <option value="فيرجيل فان دايك|CB|89|0">فيرجيل فان دايك (89)</option>
                         <option value="أشرف حكيمي|RB|84|0">أشرف حكيمي (84)</option>
                         <option value="تيبو كورتوا|GK|90|0">تيبو كورتوا (90)</option>
-                        <option value="مانويل نوير|GK|88|0">مانويل نوير (88)</option>
                     </optgroup>
                     <optgroup label="⭐ أساطير كرة القدم">
                         <option value="بيليه|ST|98|0">بيليه (98)</option>
                         <option value="دييجو مارادونا|CAM|97|0">دييجو مارادونا (97)</option>
                         <option value="زين الدين زيدان|CAM|95|0">زين الدين زيدان (95)</option>
                         <option value="رونالدو الظاهرة|ST|96|0">رونالدو الظاهرة (96)</option>
-                        <option value="رونالدينيو|LW|94|0">رونالدينيو (94)</option>
                     </optgroup>
                 </select>
                 <div style="display:flex; gap:8px;">
-                    <button onclick="startAuction()" style="background:#059669;">طرح للمزاد (بداية من 0$)</button>
+                    <button onclick="startAuction()" style="background:#059669;">طرح للمزاد (20 ثانية)</button>
                     <button onclick="finishAuction()" style="background:#dc2626;">إنهاء وحسم فوري</button>
                 </div>
             </div>
 
             <!-- العداد التنازلي -->
-            <div id="timer-box" class="timer-badge hidden">⏱️ المتبقي: <span id="timer">15</span> ثانية</div>
+            <div id="timer-box" class="timer-badge hidden">⏱️ المتبقي: <span id="timer">20</span> ثانية</div>
 
             <!-- كارت اللاعب -->
             <div class="fut-card">
@@ -216,11 +225,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- سوق الانتقالات والمبادلة (Trade Market) -->
+                <div class="trade-box">
+                    <h4 style="margin:0 0 10px 0; color:#60a5fa;">🔄 سوق الانتقالات والمبادلة السريعة:</h4>
+                    <label style="font-size:12px; color:#cbd5e1;">اختر لاعباً من فريقك لبيعه للبنك (استرداد 70% من السعر):</label>
+                    <div style="display:flex; gap:8px; margin-top:5px;">
+                        <select id="sell-player-select"><option value="">-- اختر لاعب --</option></select>
+                        <button onclick="sellPlayerBack()" style="background:#dc2626; width:40%;">بيع للبنك 💸</button>
+                    </div>
+                </div>
                 
-                <button onclick="evaluateTeamAI()" style="margin-top:15px; background:linear-gradient(135deg, #6366f1, #4f46e5); font-size:16px;">
-                    🤖 تقييم المدرب الذكي الخارق (AI Coach)
-                </button>
+                <!-- محاكاة وتقييم AI -->
+                <div style="display:flex; gap:8px; margin-top:15px;">
+                    <button onclick="evaluateTeamAI()" style="background:linear-gradient(135deg, #6366f1, #4f46e5); font-size:14px;">
+                        🤖 تقييم AI
+                    </button>
+                    <button onclick="simulateMatch()" style="background:linear-gradient(135deg, #ea580c, #c2410c); font-size:14px;">
+                        🎮 محاكاة مباراة
+                    </button>
+                </div>
+                
                 <div id="ai-evaluation" style="background:#1e1b4b; border:1px solid #6366f1; padding:15px; border-radius:12px; margin-top:12px; text-align:right; line-height:1.6;" class="hidden"></div>
+                <div id="match-result" style="background:#064e3b; border:1px solid #10b981; padding:15px; border-radius:12px; margin-top:12px; text-align:center;" class="hidden"></div>
             </div>
         </div>
     </div>
@@ -239,6 +266,11 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // مكتبة الصوتية والأصوات التفاعلية (SFX & Commentary)
+        const soundBid = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+        const soundWin = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+        const soundWhistle = new Audio('https://assets.mixkit.co/active_storage/sfx/2032/2032-preview.mp3');
+
         let currentRoom = "";
         let playerName = "";
         let myBudget = 200;
@@ -246,10 +278,19 @@
         let myTeam = [];
         let timerInterval = null;
 
+        function speakCommentary(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'ar-SA';
+                msg.rate = 1.1;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
         function joinRoom(adminMode) {
             playerName = document.getElementById('username').value.trim();
             currentRoom = document.getElementById('room-code').value.trim();
-            const startBudgetInput = parseInt(document.getElementById('start-budget').value) || 200;
             isAdmin = adminMode;
 
             if (!playerName || !currentRoom) {
@@ -257,8 +298,20 @@
                 return;
             }
 
-            myBudget = startBudgetInput;
-            document.getElementById('budget').innerText = myBudget;
+            const roomRef = database.ref('rooms/' + currentRoom);
+
+            if (isAdmin) {
+                const startBudgetInput = parseInt(document.getElementById('start-budget').value) || 200;
+                roomRef.child('config').set({ roomBudget: startBudgetInput });
+            }
+
+            roomRef.child('config').on('value', (snapshot) => {
+                const config = snapshot.val();
+                if (config && config.roomBudget) {
+                    myBudget = config.roomBudget;
+                    document.getElementById('budget').innerText = myBudget;
+                }
+            });
 
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -268,7 +321,6 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
             }
 
-            const roomRef = database.ref('rooms/' + currentRoom);
             roomRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -281,12 +333,19 @@
                         document.getElementById('highest-bidder').innerText = a.highestBidder || "لا يوجد";
                     }
 
-                    if (data.lastSold && data.lastSold.winner === playerName && !myTeam.some(p => p.id === data.lastSold.id)) {
-                        myTeam.push(data.lastSold);
-                        myBudget -= data.lastSold.price;
-                        document.getElementById('budget').innerText = myBudget;
-                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                        renderPitchUI();
+                    if (data.lastSold) {
+                        const newsText = `حسم صفقة ${data.lastSold.name} لصالح ${data.lastSold.winner} بمبلغ ${data.lastSold.price} مليون`;
+                        document.getElementById('news-ticker').innerText = `📢 خبر عاجل: ${newsText}`;
+                        
+                        if (data.lastSold.winner === playerName && !myTeam.some(p => p.id === data.lastSold.id)) {
+                            myTeam.push(data.lastSold);
+                            myBudget -= data.lastSold.price;
+                            document.getElementById('budget').innerText = myBudget;
+                            soundWin.play();
+                            speakCommentary(`مبروك! ${data.lastSold.name} ينضم رسمياً إلى فريقك`);
+                            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                            renderPitchUI();
+                        }
                     }
                 }
             });
@@ -299,11 +358,13 @@
                 name: raw[0],
                 pos: raw[1],
                 rating: parseInt(raw[2]),
-                currentBid: 0, // بداية المزاد دائماً من 0
+                currentBid: 0,
                 highestBidder: "لا يوجد"
             };
 
             database.ref('rooms/' + currentRoom + '/auction').set(auctionData);
+            soundWhistle.play();
+            speakCommentary(`بدأ المزاد الآن على اللاعب ${raw[0]}`);
 
             let timeLeft = 20;
             document.getElementById('timer-box').classList.remove('hidden');
@@ -330,6 +391,7 @@
                 return;
             }
 
+            soundBid.play();
             database.ref('rooms/' + currentRoom + '/auction').update({
                 currentBid: newBid,
                 highestBidder: playerName
@@ -347,10 +409,12 @@
             const rating = parseInt(document.getElementById('player-rating').innerText);
 
             if (bidder === "لا يوجد" || price === 0) {
+                speakCommentary("انتهى المزاد بدون أي مزايدات");
                 alert("انتهى المزاد دون مزايدات!");
                 return;
             }
 
+            soundWhistle.play();
             database.ref('rooms/' + currentRoom + '/lastSold').set({
                 id: Date.now(),
                 name: name,
@@ -363,9 +427,14 @@
 
         function renderPitchUI() {
             const grid = document.getElementById('pitch-grid');
+            const sellSelect = document.getElementById('sell-player-select');
             document.getElementById('team-count').innerText = myTeam.length;
 
-            if (myTeam.length === 0) return;
+            if (myTeam.length === 0) {
+                grid.innerHTML = `<div style="grid-column: span 2; color:#d1fae5; text-align:center; padding:20px;">الملعب فارغ! اشترك في المزايدات لبناء فريقك.</div>`;
+                sellSelect.innerHTML = `<option value="">-- اختر لاعب --</option>`;
+                return;
+            }
 
             grid.innerHTML = myTeam.map(p => `
                 <div class="pitch-card">
@@ -373,6 +442,32 @@
                     <br>طاقة: <b>${p.rating}</b> | السعر: <span style="color:#4ade80;">${p.price}M$</span>
                 </div>
             `).join('');
+
+            sellSelect.innerHTML = `<option value="">-- اختر لاعب --</option>` + myTeam.map((p, idx) => `
+                <option value="${idx}">${p.name} (${Math.floor(p.price * 0.7)}M$)</option>
+            `).join('');
+        }
+
+        function sellPlayerBack() {
+            const sellSelect = document.getElementById('sell-player-select');
+            const idx = sellSelect.value;
+
+            if (idx === "") {
+                alert("اختر لاعباً أولاً لبيعه!");
+                return;
+            }
+
+            const p = myTeam[idx];
+            const refund = Math.floor(p.price * 0.7);
+
+            myBudget += refund;
+            document.getElementById('budget').innerText = myBudget;
+
+            myTeam.splice(idx, 1);
+            renderPitchUI();
+
+            speakCommentary(`تم بيع ${p.name} واسترداد ${refund} مليون`);
+            alert(`تم بيع ${p.name} وإعادة ${refund}M$ للميزانية!`);
         }
 
         function evaluateTeamAI() {
@@ -380,31 +475,31 @@
             aiBox.classList.remove('hidden');
 
             if (myTeam.length === 0) {
-                aiBox.innerHTML = "🤖 <strong>المدرب الذكي:</strong> تشكيلتك فارغة حالياً! اشترِ بعض اللاعبين لأقوم بتحليل خطتك.";
+                aiBox.innerHTML = "🤖 <strong>المدرب الذكي:</strong> تشكيلتك فارغة حالياً!";
                 return;
             }
 
             let totalRating = 0;
-            let positions = { GK: 0, CB: 0, LB: 0, RB: 0, CM: 0, CAM: 0, CDM: 0, ST: 0, RW: 0, LW: 0 };
-
-            myTeam.forEach(p => {
-                totalRating += p.rating;
-                if (positions[p.pos] !== undefined) positions[p.pos]++;
-            });
-
+            myTeam.forEach(p => totalRating += p.rating);
             let avg = (totalRating / myTeam.length).toFixed(1);
-            let legends = myTeam.filter(p => p.rating >= 94).length;
 
-            let text = `🤖 <strong>تحليل المدرب الذكي الفائق (AI Coach):</strong><br>`;
-            text += `• <strong>معدل قوة الفريق:</strong> ${avg} / 100<br>`;
-            text += `• <strong>عدد الأساطير:</strong> ${legends} أسطورة 🔥<br><br>`;
+            aiBox.innerHTML = `🤖 <strong>تقييم AI:</strong><br>• معدل قوة الفريق: <b>${avg}/100</b><br>• إجمالي اللاعبين: ${myTeam.length}`;
+        }
 
-            if (positions.GK === 0) text += `⚠️ <strong>تنبيه خطير:</strong> ليس لديك حارس مرمى! ستستقبل أهدافاً كثيرة.<br>`;
-            if (positions.CB === 0) text += `⚠️ <strong>ضعف دفاعي:</strong> خط دفاعك مكشوف بدون قلوب دفاع.<br>`;
-            if (positions.ST + positions.RW + positions.LW >= 3) text += `💥 <strong>قوة هجومية:</strong> خط هجوم مرعب يضمن لك التهديف دائماً!<br>`;
-            if (myBudget > 100) text += `💡 <strong>نصيحة مالية:</strong> لديك سيولة عالية، استغلها لخطف الأساطير!`;
+        function simulateMatch() {
+            const matchBox = document.getElementById('match-result');
+            matchBox.classList.remove('hidden');
 
-            aiBox.innerHTML = text;
+            if (myTeam.length < 2) {
+                matchBox.innerText = "⚠️ تحتاج لاعبين على الأقل لبدء مباراة تجريبية!";
+                return;
+            }
+
+            let goals = Math.floor(Math.random() * 4) + 1;
+            let star = myTeam[Math.floor(Math.random() * myTeam.length)].name;
+
+            speakCommentary(`انتهت المباراة بفوز فريقك بـ ${goals} أهداف وكان ${star} هو نجم اللقاء`);
+            matchBox.innerHTML = `⚽ <strong>نتيجة المباراة التجريبية:</strong><br>فريقك فاز بنتيجة <b>${goals} - 0</b>!<br>🌟 رجل المباراة: <b>${star}</b>.`;
         }
     </script>
 </body>
