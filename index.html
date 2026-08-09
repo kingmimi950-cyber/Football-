@@ -3,203 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم - إدارة AI (+1000 لاعب)</title>
+    <title>مزاد النجوم والأيقونات</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --bg: #0d1117;
-            --card: #161b22;
-            --gold: #f59e0b;
-            --green: #10b981;
-            --blue: #3b82f6;
-            --purple: #8b5cf6;
-            --red: #ef4444;
-        }
-
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: #f3f4f6;
-            margin: 0;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .container { max-width: 500px; margin: 0 auto; }
-
-        .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .dev-badge {
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid var(--gold);
-            color: #fef08a;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .ai-status {
-            background: linear-gradient(135deg, #2e1065, #581c87);
-            border: 1px solid var(--purple);
-            color: #c084fc;
-            padding: 8px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        input, button {
-            width: 100%;
-            padding: 12px;
-            margin: 5px 0;
-            border-radius: 10px;
-            border: 1px solid #30363d;
-            background: #21262d;
-            color: #fff;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        button {
-            background: var(--blue);
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-        }
-
-        button:active { transform: scale(0.98); }
-
-        .fut-card {
-            background: linear-gradient(135deg, #1e1b4b, #4c1d95);
-            border: 2px solid var(--gold);
-            border-radius: 16px;
-            padding: 15px;
-            position: relative;
-            margin: 10px 0;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-        }
-
-        .player-img-container {
-            width: 130px;
-            height: 140px;
-            margin: 5px auto;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
-
-        .player-real-img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.6));
-        }
-
-        .rating { font-size: 36px; font-weight: 900; color: #fef08a; line-height: 1; }
-        .pos { background: var(--gold); color: #000; padding: 2px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; }
-        .name { font-size: 22px; font-weight: bold; margin: 8px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-
-        .timer-badge {
-            background: var(--red); color: #fff; padding: 6px 16px; border-radius: 12px;
-            font-weight: bold; display: inline-block; margin-bottom: 8px; font-size: 16px;
-        }
-
-        .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .btn-bid { background: var(--green); font-size: 14px; padding: 12px 0; font-weight: bold; }
-
-        .pitch-box {
-            background: #14532d;
-            border: 2px solid #22c55e;
-            border-radius: 12px;
-            padding: 10px;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-
-        .pitch-row {
-            display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 6px 0;
-        }
-
-        .player-tag {
-            background: #0f172a; border: 1px solid var(--gold); padding: 5px 10px; border-radius: 8px; color: #fff;
-        }
-
+        :root { --bg: #0d1117; --card: #161b22; --gold: #f59e0b; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; --red: #ef4444; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; text-align: center; }
+        .container { max-width: 480px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 1px solid #30363d; }
+        .dev-badge { background: rgba(245,158,11,0.15); border: 1px solid var(--gold); color: #fef08a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        input, button { width: 100%; padding: 10px; margin: 4px 0; border-radius: 8px; border: 1px solid #30363d; background: #21262d; color: #fff; box-sizing: border-box; }
+        button { background: var(--blue); font-weight: bold; cursor: pointer; border: none; }
+        .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
+        .player-img-container { width: 120px; height: 130px; margin: 0 auto; display: flex; justify-content: center; align-items: flex-end; }
+        .player-real-img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
+        .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
+        .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .name { font-size: 20px; font-weight: bold; margin: 6px 0; }
+        .timer-badge { background: var(--red); padding: 4px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .btn-bid { background: var(--green); padding: 10px 0; }
+        .pitch-box { background: #14532d; border: 1px solid #22c55e; border-radius: 10px; padding: 8px; margin-top: 8px; font-size: 12px; }
+        .player-tag { background: #0f172a; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
         .hidden { display: none; }
     </style>
-
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
-
     <div class="container">
-        <div class="dev-badge">👑 تصميم وتطوير: محمد خميس</div>
-        
-        <div class="ai-status">🤖 الذكاء الاصطناعي يدير +1000 لاعب بصور حقيقية مفرغة</div>
+        <div class="dev-badge">👑 تطوير: محمد خميس</div>
 
-        <!-- 1. شاشة الدخول -->
         <div id="setup-screen" class="card">
-            <h3>⚽ دخول غرفة المزاد</h3>
+            <h3>⚽ دخول المزاد</h3>
             <input type="text" id="username" placeholder="اسم المدرب">
             <input type="text" id="room-code" placeholder="كود الغرفة">
             <button onclick="joinGame(false)">دخول كـ مدرب</button>
-            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن (منظم الوقت والميزانية)</button>
+            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن</button>
         </div>
 
-        <!-- 2. شاشة اللعبة -->
         <div id="game-screen" class="card hidden">
-            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold;">
                 <span id="room-txt">غرفة: --</span>
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- لوحة تحكم الآدمن -->
-            <div id="admin-panel" class="card hidden" style="background:#1f2937; margin-top:10px;">
-                <h4 style="margin:0 0 8px 0; color:#c084fc;">⏱️ تحكم الآدمن (الوقت والميزانية)</h4>
-                
-                <div style="display:flex; gap:5px;">
-                    <input type="number" id="custom-timer" value="20" placeholder="وقت المزاد بالثواني" style="margin:0;">
-                </div>
-
-                <button onclick="aiStartAuction()" style="background:var(--purple); margin-top:8px;">🤖 طرح لاعب جديد عشوائي (+1000 AI)</button>
-                <button onclick="finishAuction()" style="background:var(--green);">🔨 حسم الصفقة فوراً للأعلى</button>
-                <button onclick="aiCompensateLoser()" style="background:#d97706;">🤖 تعويض الخاسر بقرعة AI</button>
+            <div id="admin-panel" class="card hidden" style="background:#1f2937; margin-top:8px;">
+                <input type="number" id="custom-timer" value="20" placeholder="الوقت بالثواني">
+                <button onclick="aiStartAuction()" style="background:var(--purple);">🤖 طرح لاعب / أسطورة جديد</button>
+                <button onclick="finishAuction()" style="background:var(--green);">🔨 حسم الصفقة</button>
             </div>
 
-            <!-- العداد المباشر -->
             <div id="timer-box" class="timer-badge hidden">⏱️ المتبقي: <span id="timer">20</span> ثانية</div>
 
-            <!-- بطاقة اللاعب للمزاد -->
             <div class="fut-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between;">
                     <div class="rating" id="p-rating">--</div>
                     <span class="pos" id="p-pos">---</span>
                 </div>
-
-                <!-- صورة اللاعب الحقيقية بدون خلفية -->
                 <div class="player-img-container">
-                    <img id="p-img" class="player-real-img" src="" alt="صورة اللاعب الحقيقية">
+                    <img id="p-img" class="player-real-img" src="" alt="" onerror="this.src='https://cdn.futbin.com/content/fifa24/img/players/158023.png'">
                 </div>
-
                 <div class="name" id="p-name">بانتظار المزاد...</div>
-                
-                <div style="background:rgba(0,0,0,0.4); padding:8px; border-radius:10px; margin-top:8px;">
-                    <div>أعلى سومة: <strong id="c-bid" style="color:var(--gold); font-size:22px;">0</strong> M$</div>
+                <div style="background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
+                    <div>أعلى سومة: <strong id="c-bid" style="color:var(--gold);">0</strong> M$</div>
                     <div>المزايد الحالي: <strong id="c-bidder" style="color:#38bdf8;">لا يوجد</strong></div>
                 </div>
             </div>
 
-            <!-- أزرار المزايدة -->
             <div class="bid-grid">
                 <button class="btn-bid" onclick="bid(5)">+5M</button>
                 <button class="btn-bid" onclick="bid(10)">+10M</button>
@@ -207,12 +77,9 @@
                 <button class="btn-bid" onclick="bid(20)">+20M</button>
             </div>
 
-            <!-- تشكيلة فريقك -->
             <div class="pitch-box">
-                <h4 style="margin:0 0 5px 0;">📋 تشكيلة كتيبتك:</h4>
-                <div id="team-list" class="pitch-row">
-                    <span style="color:#9ca3af;">لم تحصل على لاعبين بعد</span>
-                </div>
+                <b>📋 تشكيلة كتيبتك:</b>
+                <div id="team-list" style="margin-top:4px;"><span style="color:#9ca3af;">لا يوجد لاعبين</span></div>
             </div>
         </div>
     </div>
@@ -227,17 +94,29 @@
             messagingSenderId: "520018134224",
             appId: "1:520018134224:web:82ff84ccea9a5697ec8ad5"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // ==========================================
-        // ⚽ نظام الـ 1000+ لاعب والصور الحقيقية المفرغة
-        // ==========================================
-        const starPlayers = [
+        // 🌟 قائمة الأيقونات والنجوم العالمية الحقيقية بأسماء واضحة وصور مفرغة مضمونة
+        const realAndIconPlayers = [
+            // ICONS أساطير
+            { id: 242519, name: "بيليه (Pele)", pos: "CAM", rating: 98 },
+            { id: 190042, name: "مارادونا (Maradona)", pos: "CAM", rating: 97 },
+            { id: 138431, name: "زيدان (Zidane)", pos: "CAM", rating: 96 },
+            { id: 37576,  name: "رونالدو الظاهرة (R9)", pos: "ST", rating: 96 },
+            { id: 28130,  name: "رونالدينيو (Ronaldinho)", pos: "LW", rating: 94 },
+            { id: 238392, name: "كرويف (Cruyff)", pos: "CF", rating: 94 },
+            { id: 238388, name: "مالديني (Maldini)", pos: "CB", rating: 94 },
+            { id: 238393, name: "هنري (Henry)", pos: "ST", rating: 93 },
+            { id: 1625,   name: "روبرتو كارلوس", pos: "LB", rating: 91 },
+            { id: 238389, name: "خوليت (Gullit)", pos: "CF", rating: 93 },
+            { id: 238390, name: "فييرا (Vieira)", pos: "CM", rating: 91 },
+            { id: 51,     name: "كاسياس (Casillas)", pos: "GK", rating: 92 },
+
+            // النجوم الحاليين المشهورين
             { id: 209331, name: "محمد صلاح", pos: "RW", rating: 89 },
             { id: 231747, name: "كيليان مبابي", pos: "ST", rating: 91 },
             { id: 238794, name: "فينيسيوس جونيور", pos: "LW", rating: 89 },
@@ -250,58 +129,31 @@
             { id: 252371, name: "جود بيلينجهام", pos: "CAM", rating: 90 },
             { id: 231866, name: "رودري", pos: "CDM", rating: 89 },
             { id: 177003, name: "لوكا مودريتش", pos: "CM", rating: 87 },
-            { id: 203376, name: "فيرجيل فان دايك", pos: "CB", rating: 89 },
+            { id: 203376, name: "فان دايك", pos: "CB", rating: 89 },
             { id: 235212, name: "أشرف حكيمي", pos: "RB", rating: 84 },
             { id: 212190, name: "أليسون بيكر", pos: "GK", rating: 89 },
             { id: 192119, name: "تيبو كورتوا", pos: "GK", rating: 90 }
         ];
 
-        function generate1000Players() {
-            const list = [...starPlayers];
-            const positions = ["ST", "RW", "LW", "CAM", "CM", "CDM", "CB", "RB", "LB", "GK"];
-            const firstNames = ["أحمد", "عمر", "كريم", "علي", "محمود", "يوسف", "طارق", "لوكا", "أنطوان", "باولو", "غابرييل", "إنزو"];
-            const lastNames = ["سيلفا", "مارتينيز", "فيرنانديز", "غارسيا", "كوستا", "ألفاريز", "لوبيز", "هيرنانديز"];
-
-            for (let i = 1; i <= 1000; i++) {
-                const randomId = 200000 + (i * 37) % 50000;
-                list.push({
-                    id: randomId,
-                    name: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
-                    pos: positions[i % positions.length],
-                    rating: 75 + (i % 16)
-                });
-            }
-            return list;
-        }
-
-        const allPlayersDatabase = generate1000Players();
-
         function getRandomAuctionPlayer() {
-            const randomIndex = Math.floor(Math.random() * allPlayersDatabase.length);
-            const selected = allPlayersDatabase[randomIndex];
-
+            const p = realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
             return {
-                name: selected.name,
-                pos: selected.pos,
-                rating: selected.rating,
-                img: `https://cdn.futbin.com/content/fifa24/img/players/${selected.id}.png`
+                name: p.name,
+                pos: p.pos,
+                rating: p.rating,
+                img: `https://cdn.futbin.com/content/fifa24/img/players/${p.id}.png`
             };
         }
 
-        // ==========================================
-        // 🎮 منطق اللعبة والـ Firebase
-        // ==========================================
         function joinGame(admin) {
             myName = document.getElementById('username').value.trim();
             room = document.getElementById('room-code').value.trim();
             isAdmin = admin;
-
-            if(!myName || !room) return alert("برجاء كتابة الاسم وكود الغرفة!");
+            if(!myName || !room) return alert("اكتب الاسم وكود الغرفة!");
 
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('room-txt').innerText = `غرفة: ${room}`;
-
             if(isAdmin) document.getElementById('admin-panel').classList.remove('hidden');
 
             db.ref(`rooms/${room}`).on('value', (snap) => {
@@ -324,7 +176,7 @@
                         myTeam.push(sold);
                         myBudget -= sold.price;
                         document.getElementById('budget').innerText = myBudget;
-                        confetti({ particleCount: 90, spread: 70 });
+                        confetti({ particleCount: 70, spread: 60 });
                         renderTeam();
                     }
                 }
@@ -344,7 +196,6 @@
                 bid: 0,
                 bidder: "لا يوجد"
             });
-
             startTimer(timeLimit);
         }
 
@@ -352,7 +203,6 @@
             let left = seconds;
             document.getElementById('timer-box').classList.remove('hidden');
             document.getElementById('timer').innerText = left;
-
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 left--;
@@ -368,17 +218,12 @@
         function bid(inc) {
             if(!currentAuction) return;
             const newBid = currentAuction.bid + inc;
-            if(newBid > myBudget) return alert("ميزانيتك لا تكفي!");
-
-            db.ref(`rooms/${room}/auction`).update({
-                bid: newBid,
-                bidder: myName
-            });
+            if(newBid > myBudget) return alert("الميزانية لا تكفي!");
+            db.ref(`rooms/${room}/auction`).update({ bid: newBid, bidder: myName });
         }
 
         function finishAuction() {
             if(!currentAuction || currentAuction.bidder === "لا يوجد") return;
-
             db.ref(`rooms/${room}/lastSold`).set({
                 id: currentAuction.id,
                 name: currentAuction.name,
@@ -387,36 +232,14 @@
                 price: currentAuction.bid,
                 winner: currentAuction.bidder
             });
-
-            db.ref(`rooms/${room}/auction`).update({ name: "🤖 تم البيع بقرار AI", bidder: "المزاد انتهى", bid: 0 });
+            db.ref(`rooms/${room}/auction`).update({ name: "تم البيع بنجاح!", bidder: "المزاد انتهى", bid: 0 });
             clearInterval(timerInterval);
             document.getElementById('timer-box').classList.add('hidden');
         }
 
-        function aiCompensateLoser() {
-            const loser = prompt("أدخل اسم المدرب الخاسر لمنحه تعويض من الذكاء الاصطناعي:");
-            if(!loser) return;
-
-            const player = getRandomAuctionPlayer();
-
-            db.ref(`rooms/${room}/lastSold`).set({
-                id: Date.now(),
-                name: player.name,
-                pos: player.pos,
-                rating: player.rating,
-                price: 0,
-                winner: loser
-            });
-
-            alert(`🤖 الذكاء الاصطناعي منح ${player.name} كتعويض لـ ${loser}!`);
-        }
-
         function renderTeam() {
-            const container = document.getElementById('team-list');
-            container.innerHTML = myTeam.map(p => `
-                <div class="player-tag">
-                    <strong>${p.name}</strong> (${p.pos} - ${p.rating})
-                </div>
+            document.getElementById('team-list').innerHTML = myTeam.map(p => `
+                <span class="player-tag"><b>${p.name}</b> (${p.pos}-${p.rating})</span>
             `).join('');
         }
     </script>
