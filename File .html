@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مزاد النجوم - أونلاين</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; text-align: center; padding: 20px; margin: 0; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; max-width: 500px; margin: 15px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        input, button, select { padding: 12px; margin: 6px 0; width: 90%; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+        button { background-color: #2563eb; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        .bid-btn { background-color: #16a34a; margin: 5px; width: 42%; display: inline-block; }
+        .player-card { background: #334155; padding: 15px; border-radius: 10px; margin-top: 10px; border: 2px solid #3b82f6; }
+        .hidden { display: none; }
+        .admin-panel { background: #475569; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .bidders-list { text-align: right; background: #0f172a; padding: 10px; border-radius: 8px; max-height: 120px; overflow-y: auto; font-size: 14px; margin-top: 10px; }
+    </style>
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <h2>⚽ لعبة مزاد النجوم</h2>
+
+    <!-- 1. شاشة الدخول -->
+    <div id="setup-screen" class="card">
+        <h3>الدخول للعبة</h3>
+        <input type="text" id="username" placeholder="اسمك داخل اللعبة">
+        <input type="text" id="room-code" placeholder="كود الغرفة (مثال: 100)">
+        <button onclick="joinRoom(false)">دخول كـ لاعب</button>
+        <button onclick="joinRoom(true)" style="background:#7c3aed;">دخول كـ آدمن (منظم المزاد)</button>
+    </div>
+
+    <!-- 2. شاشة المزاد -->
+    <div id="game-screen" class="card hidden">
+        <h3 id="room-display">غرفة: --</h3>
+        
+        <!-- لوحة الآدمن التحكمية -->
+        <div id="admin-panel" class="admin-panel hidden">
+            <h4>⚙️ لوحة الآدمن</h4>
+            <select id="player-select">
+                <option value="ليونيل ميسي|مهاجم|93|50">ليونيل ميسي (RW - 93)</option>
+                <option value="كريستيانو رونالدو|مهاجم|91|40">كريستيانو رونالدو (ST - 91)</option>
+                <option value="كيليان مبابي|مهاجم|92|45">كيليان مبابي (ST - 92)</option>
+                <option value="كيفين دي بروين|وسط|91|35">كيفين دي بروين (CM - 91)</option>
+                <option value="فيرجيل فان دايك|مدافع|89|30">فيرجيل فان دايك (CB - 89)</option>
+            </select>
+            <button onclick="startNewAuction()" style="background:#059669;">طرح اللاعب للمزاد</button>
+        </div>
+
+        <p>ميزانيتك المتبقية: <strong id="budget" style="color:#4ade80">100</strong> مليون $</p>
+
+        <!-- كارت اللاعب المعروض -->
+        <div class="player-card">
+            <h3 id="player-name">بانتظار طرح لاعب...</h3>
+            <p>المركز: <span id="player-pos">-</span> | الطاقات: <span id="player-rating">-</span></p>
+            <p>سعر البداية: <span id="base-price">0</span>M$</p>
+            <hr style="border-color: #475569;">
+            <p>أعلى مزايدة: <strong id="current-bid" style="color:#facc15">0</strong> مليون $</p>
+            <p>أعلى مزايد: <strong id="highest-bidder" style="color:#38bdf8">لا يوجد</strong></p>
+        </div>
+
+        <!-- أزرار المزايدة -->
+        <div style="margin-top: 15px;">
+            <button class="bid-btn" onclick="placeBid(5)">+5 مليون $</button>
+            <button class="bid-btn" onclick="placeBid(10)">+10 مليون $</button>
+        </div>
+
+        <h4>سجل المزايدات الحية:</h4>
+        <div class="bidders-list" id="bid-history"></div>
+    </div>
+
+    <script>
+        // ✅ البيانات الخاصة بمشروعك تم ربطها بنجاح
+        const firebaseConfig = {
+            apiKey: "AIzaSyCAHuaUJZtif4zS3fDJBM1AMsPNFSrPYPk",
+            authDomain: "football-game-2176c.firebaseapp.com",
+            databaseURL: "https://football-game-2176c-default-rtdb.firebaseio.com",
+            projectId: "football-game-2176c",
+            storageBucket: "football-game-2176c.firebasestorage.app",
+            messagingSenderId: "520018134224",
+            appId: "1:520018134224:web:82ff84ccea9a5697ec8ad5"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentRoom = "";
+        let playerName = "";
+        let myBudget = 100;
+        let isAdmin = false;
+
+        function joinRoom(adminMode) {
+            playerName = document.getElementById('username').value.trim();
+            currentRoom = document.getElementById('room-code').value.trim();
+            isAdmin = adminMode;
+
+            if (!playerName || !currentRoom) {
+                alert("يرجى كتابة الاسم وكود الغرفة!");
+                return;
+            }
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('room-display').innerText = `غرفة: ${currentRoom}`;
+
+            if (isAdmin) {
+                document.getElementById('admin-panel').classList.remove('hidden');
+            }
+
+            // الاستماع للتحديثات الحية من قاعدة البيانات
+            const roomRef = database.ref('rooms/' + currentRoom);
+            roomRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.auction) {
+                    const auction = data.auction;
+                    document.getElementById('player-name').innerText = auction.name;
+                    document.getElementById('player-pos').innerText = auction.pos;
+                    document.getElementById('player-rating').innerText = auction.rating;
+                    document.getElementById('base-price').innerText = auction.basePrice;
+                    document.getElementById('current-bid').innerText = auction.currentBid;
+                    document.getElementById('highest-bidder').innerText = auction.highestBidder || "لا يوجد";
+                    
+                    if (data.history) {
+                        const historyDiv = document.getElementById('bid-history');
+                        historyDiv.innerHTML = Object.values(data.history).map(h => `<p style="margin:4px 0;">• ${h}</p>`).reverse().join('');
+                    }
+                }
+            });
+        }
+
+        function startNewAuction() {
+            const rawData = document.getElementById('player-select').value.split('|');
+            const roomRef = database.ref('rooms/' + currentRoom);
+            
+            // إعادة ضبط المزاد للاعب جديد
+            roomRef.child('auction').set({
+                name: rawData[0],
+                pos: rawData[1],
+                rating: rawData[2],
+                basePrice: parseInt(rawData[3]),
+                currentBid: parseInt(rawData[3]),
+                highestBidder: "لا يوجد"
+            });
+
+            // مسح السجل القديم
+            roomRef.child('history').remove();
+        }
+
+        function placeBid(increment) {
+            const currentBid = parseInt(document.getElementById('current-bid').innerText) || 0;
+            const newBid = currentBid + increment;
+
+            if (newBid > myBudget) {
+                alert("ميزانيتك لا تكفي لهذه المزايدة!");
+                return;
+            }
+
+            const roomRef = database.ref('rooms/' + currentRoom);
+            roomRef.child('auction').update({
+                currentBid: newBid,
+                highestBidder: playerName
+            });
+
+            // تسجيل الحركة في قاعدة البيانات لتظهر للجميع
+            roomRef.child('history').push(`${playerName} زايد بمبلغ ${newBid} مليون $`);
+        }
+    </script>
+</body>
+</html>
