@@ -15,8 +15,7 @@
         button { background: var(--blue); font-weight: bold; cursor: pointer; border: none; }
         button:active { transform: scale(0.98); }
         .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
-        .player-img-container { width: 140px; height: 140px; margin: 0 auto; display: flex; justify-content: center; align-items: center; }
-        .player-real-img { max-width: 100%; max-height: 100%; border-radius: 10px; object-fit: cover; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
+        .player-avatar { width: 110px; height: 110px; margin: 0 auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; }
         .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
         .name { font-size: 20px; font-weight: bold; margin: 6px 0; }
@@ -25,7 +24,9 @@
         .btn-bid { background: var(--green); padding: 10px 0; }
         .btn-finish { background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; font-size: 15px; margin-top: 6px; padding: 12px; border-radius: 10px; }
         .pitch-box { background: #14532d; border: 1px solid #22c55e; border-radius: 10px; padding: 8px; margin-top: 8px; font-size: 12px; }
-        .player-tag { background: #0f172a; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
+        .members-box { background: #0f172a; border: 1px solid var(--blue); border-radius: 10px; padding: 8px; margin-bottom: 10px; font-size: 13px; text-align: right; }
+        .player-tag { background: #1e293b; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
+        .user-tag { background: #0369a1; border: 1px solid #38bdf8; color: white; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block; font-size: 11px; }
         .hidden { display: none; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -46,9 +47,15 @@
 
         <!-- شاشة اللعبة -->
         <div id="game-screen" class="card hidden">
-            <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px;">
                 <span id="room-txt">غرفة: --</span>
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
+            </div>
+
+            <!-- قائمة المدربين الحاضرين بالغرفة -->
+            <div class="members-box">
+                <b>👥 المدربين المتواجدين الآن:</b>
+                <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري التحديث...</span></div>
             </div>
 
             <!-- لوحة الآدمن -->
@@ -60,14 +67,17 @@
             <!-- العداد -->
             <div id="timer-box" class="timer-badge hidden">⏱️ المتبقي: <span id="timer">20</span> ثانية</div>
 
-            <!-- كارت اللاعب -->
+            <!-- كارت اللاعب المضمون 100% -->
             <div class="fut-card">
                 <div style="display:flex; justify-content:space-between;">
                     <div class="rating" id="p-rating">--</div>
                     <span class="pos" id="p-pos">---</span>
                 </div>
-                <div class="player-img-container">
-                    <img id="p-img" class="player-real-img" src="" alt="شعار المزاد">
+                <div class="player-avatar">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
                 </div>
                 <div class="name" id="p-name">بانتظار المزاد...</div>
                 <div style="background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
@@ -111,29 +121,27 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // روابط صور حرة ومضمونة 100% من ويكيميديا وسيرفرات مفتوحة
+        // قائمة نجوم وأسطوريات ثابته
         const realAndIconPlayers = [
-            { name: "ليونيل ميسي", pos: "CF", rating: 90, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/220px-Lionel_Messi_20180626.jpg" },
-            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/220px-Cristiano_Ronaldo_2018.jpg" },
-            { name: "محمد صلاح", pos: "RW", rating: 89, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mohamed_Salah_2018.jpg/220px-Mohamed_Salah_2018.jpg" },
-            { name: "كيليان مبابي", pos: "ST", rating: 91, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/France_vs._Croatia_2018_Final_%28cropped%29_Kylian_Mbapp%C3%A9.jpg/220px-France_vs._Croatia_2018_Final_%28cropped%29_Kylian_Mbapp%C3%A9.jpg" },
-            { name: "زين الدين زيدان", pos: "CAM", rating: 96, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Zinedine_Zidane_by_Tasnim_03.jpg/220px-Zinedine_Zidane_by_Tasnim_03.jpg" },
-            { name: "بيليه (Pele)", pos: "CAM", rating: 98, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Pel%C3%A9_by_John_Mathew_Smith_1958.jpg/220px-Pel%C3%A9_by_John_Mathew_Smith_1958.jpg" },
-            { name: "مارادونا (Maradona)", pos: "CAM", rating: 97, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Maradona-1986-Argentina-Mexico.jpg/220px-Maradona-1986-Argentina-Mexico.jpg" },
-            { name: "إيرلينج هالاند", pos: "ST", rating: 91, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Erling_Haaland_2023.jpg/220px-Erling_Haaland_2023.jpg" },
-            { name: "جود بيلينجهام", pos: "CAM", rating: 90, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Jude_Bellingham_2023.jpg/220px-Jude_Bellingham_2023.jpg" },
-            { name: "لوكا مودريتش", pos: "CM", rating: 87, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/bf/Luka_Modri%C4%87_2018.jpg/220px-Luka_Modri%C4%87_2018.jpg" }
+            { name: "ليونيل ميسي", pos: "CF", rating: 90 },
+            { name: "كريستيانو رونالدو", pos: "ST", rating: 86 },
+            { name: "محمد صلاح", pos: "RW", rating: 89 },
+            { name: "كيليان مبابي", pos: "ST", rating: 91 },
+            { name: "زين الدين زيدان", pos: "CAM", rating: 96 },
+            { name: "بيليه (Pele)", pos: "CAM", rating: 98 },
+            { name: "مارادونا (Maradona)", pos: "CAM", rating: 97 },
+            { name: "رونالدو الظاهرة (R9)", pos: "ST", rating: 96 },
+            { name: "إيرلينج هالاند", pos: "ST", rating: 91 },
+            { name: "جود بيلينجهام", pos: "CAM", rating: 90 },
+            { name: "لوكا مودريتش", pos: "CM", rating: 87 },
+            { name: "فينيسيوس جونيور", pos: "LW", rating: 89 },
+            { name: "باتريك فييرا", pos: "CM", rating: 91 },
+            { name: "يوهان كرويف", pos: "CF", rating: 94 }
         ];
 
         function getRandomAuctionPlayer() {
             return realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
         }
-
-        // دالة إنقاذ: في حالة تعثر التحميل يتم مولد كارت تلقائي ملون
-        document.getElementById('p-img').onerror = function() {
-            const pName = document.getElementById('p-name').innerText || "Player";
-            this.src = `https://via.placeholder.com/140x140/1e1b4b/fef08a?text=${encodeURIComponent(pName)}`;
-        };
 
         function joinGame(admin) {
             myName = document.getElementById('username').value.trim();
@@ -146,20 +154,35 @@
             document.getElementById('room-txt').innerText = `غرفة: ${room}`;
             if(isAdmin) document.getElementById('admin-panel').classList.remove('hidden');
 
+            // تسجيل حضور اللاعب في الروم بالـ Firebase
+            const userRef = db.ref(`rooms/${room}/users/${myName}`);
+            userRef.set({ name: myName, role: isAdmin ? "آدمن 👑" : "مدرب ⚽" });
+            userRef.onDisconnect().remove();
+
+            // الاستماع المتزامن لكل أحداث الغرفة
             db.ref(`rooms/${room}`).on('value', (snap) => {
                 const data = snap.val();
                 if(!data) return;
 
+                // تحديث قائمة المتواجدين
+                if(data.users) {
+                    const userListHtml = Object.values(data.users).map(u => `
+                        <span class="user-tag">${u.name} (${u.role})</span>
+                    `).join('');
+                    document.getElementById('room-users').innerHTML = userListHtml;
+                }
+
+                // تحديث الكارت المباشر
                 if(data.auction) {
                     currentAuction = data.auction;
                     document.getElementById('p-name').innerText = currentAuction.name;
                     document.getElementById('p-pos').innerText = currentAuction.pos;
                     document.getElementById('p-rating').innerText = currentAuction.rating;
-                    document.getElementById('p-img').src = currentAuction.img;
                     document.getElementById('c-bid').innerText = currentAuction.bid;
                     document.getElementById('c-bidder').innerText = currentAuction.bidder;
                 }
 
+                // استقبال نتيجة الصفقة
                 if(data.lastSold) {
                     const sold = data.lastSold;
                     if(sold.winner === myName && !myTeam.some(p => p.id === sold.id)) {
@@ -182,7 +205,6 @@
                 name: player.name,
                 pos: player.pos,
                 rating: player.rating,
-                img: player.img,
                 bid: 0,
                 bidder: "لا يوجد"
             });
