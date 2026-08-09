@@ -19,10 +19,10 @@
         .user-tag { background: #0369a1; border: 1px solid #38bdf8; color: white; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block; font-size: 11px; }
 
         .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
-        .player-avatar { width: 100px; height: 100px; margin: 10px auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; }
+        .player-avatar { width: 100px; height: 100px; margin: 10px auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
-        .name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #fff; }
+        .name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #ffffff; }
         .timer-badge { background: var(--red); padding: 4px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
         .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
         .btn-bid { background: var(--green); padding: 10px 0; font-weight: bold; }
@@ -41,8 +41,8 @@
         <!-- شاشة الدخول -->
         <div id="setup-screen" class="card">
             <h3>⚽ دخول المزاد</h3>
-            <input type="text" id="username" placeholder="اسم المدرب">
-            <input type="text" id="room-code" placeholder="كود الغرفة">
+            <input type="text" id="username" placeholder="اسم المدرب (مثال: محمد)">
+            <input type="text" id="room-code" placeholder="كود الغرفة (أحرف أو أرقام فقط)">
             <button onclick="joinGame(false)">دخول كـ مدرب</button>
             <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن</button>
         </div>
@@ -54,7 +54,7 @@
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- قائمة المدربين المتواجدين بالغرفة -->
+            <!-- قائمة الحضور -->
             <div class="members-box">
                 <b>👥 المتواجدون بالروم الآن:</b>
                 <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري الاتصال...</span></div>
@@ -75,12 +75,16 @@
                     <div class="rating" id="p-rating">--</div>
                     <span class="pos" id="p-pos">---</span>
                 </div>
+                
+                <!-- مكان صورة اللاعب الحقيقية -->
                 <div class="player-avatar">
-                    <svg width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <img id="p-photo" src="" alt="صورة اللاعب" style="width:100%; height:100%; border-radius:50%; object-fit:cover; display:none;">
+                    <svg id="p-placeholder" width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                 </div>
+
                 <div class="name" id="p-name">بانتظار المزاد...</div>
                 <div style="background:rgba(0,0,0,0.4); padding:8px; border-radius:8px; margin-top:6px;">
                     <div>أعلى سومة: <strong id="c-bid" style="color:var(--gold);">0</strong> M$</div>
@@ -123,24 +127,31 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
+        // قائمة اللاعبين تحتوي على صورهم المباشرة
         const realAndIconPlayers = [
-            { name: "ليونيل ميسي", pos: "CF", rating: 90 },
-            { name: "كريستيانو رونالدو", pos: "ST", rating: 86 },
-            { name: "محمد صلاح", pos: "RW", rating: 89 },
-            { name: "كيليان مبابي", pos: "ST", rating: 91 },
-            { name: "زين الدين زيدان", pos: "CAM", rating: 96 },
-            { name: "بيليه (Pele)", pos: "CAM", rating: 98 },
-            { name: "مارادونا (Maradona)", pos: "CAM", rating: 97 },
-            { name: "رونالدو الظاهرة", pos: "ST", rating: 96 },
-            { name: "إيرلينج هالاند", pos: "ST", rating: 91 },
-            { name: "جود بيلينجهام", pos: "CAM", rating: 90 },
-            { name: "لوكا مودريتش", pos: "CM", rating: 87 },
-            { name: "فينيسيوس جونيور", pos: "LW", rating: 89 }
+            { name: "ليونيل ميسي", pos: "RW", rating: 90, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85007352.png" },
+            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, photo: "https://sortitoutsi.b-cdn.net/uploads/face/1202888.png" },
+            { name: "محمد صلاح", pos: "RW", rating: 89, photo: "https://sortitoutsi.b-cdn.net/uploads/face/28080880.png" },
+            { name: "كيليان مبابي", pos: "ST", rating: 91, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85139014.png" },
+            { name: "زين الدين زيدان", pos: "CAM", rating: 96, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85012586.png" },
+            { name: "بيليه (Pele)", pos: "CAM", rating: 98, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85002088.png" },
+            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, photo: "https://sortitoutsi.b-cdn.net/uploads/face/19302206.png" },
+            { name: "إيرلينج هالاند", pos: "ST", rating: 91, photo: "https://sortitoutsi.b-cdn.net/uploads/face/29179241.png" },
+            { name: "جود بيلينجهام", pos: "CAM", rating: 90, photo: "https://sortitoutsi.b-cdn.net/uploads/face/28108422.png" },
+            { name: "رونالدو الظاهرة", pos: "ST", rating: 96, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85012558.png" }
         ];
 
+        function sanitizeKey(str) {
+            return str.replace(/[.#$\[\]/]/g, "_").replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+        }
+
         function joinGame(admin) {
-            myName = document.getElementById('username').value.trim();
-            room = document.getElementById('room-code').value.trim();
+            let rawUser = document.getElementById('username').value.trim();
+            let rawRoom = document.getElementById('room-code').value.trim();
+
+            myName = rawUser;
+            room = sanitizeKey(rawRoom);
+
             isAdmin = admin;
             if(!myName || !room) return alert("يرجى إدخال اسمك وكود الغرفة!");
 
@@ -149,17 +160,15 @@
             document.getElementById('room-txt').innerText = `غرفة: ${room}`;
             if(isAdmin) document.getElementById('admin-panel').classList.remove('hidden');
 
-            // إضافة الحضور للروم
-            const userRef = db.ref(`rooms/${room}/users/${myName}`);
+            const cleanUserKey = sanitizeKey(myName) || "User_" + Math.floor(Math.random()*1000);
+            const userRef = db.ref(`rooms/${room}/users/${cleanUserKey}`);
             userRef.set({ name: myName, role: isAdmin ? "👑 آدمن" : "⚽ مدرب" });
             userRef.onDisconnect().remove();
 
-            // الاستماع المباشر للتغييرات
             db.ref(`rooms/${room}`).on('value', (snap) => {
                 const data = snap.val();
                 if(!data) return;
 
-                // 1. تحديث قائمة اللاعبين المتواجدين
                 if(data.users) {
                     const usersHtml = Object.values(data.users).map(u => `
                         <span class="user-tag">${u.name} (${u.role})</span>
@@ -167,7 +176,6 @@
                     document.getElementById('room-users').innerHTML = usersHtml;
                 }
 
-                // 2. تحديث كارت اللاعب الحالي
                 if(data.auction) {
                     currentAuction = data.auction;
                     document.getElementById('p-name').innerText = currentAuction.name || "بانتظار المزاد...";
@@ -175,9 +183,20 @@
                     document.getElementById('p-rating').innerText = currentAuction.rating || "--";
                     document.getElementById('c-bid').innerText = currentAuction.bid || 0;
                     document.getElementById('c-bidder').innerText = currentAuction.bidder || "لا يوجد";
+
+                    // عرض صورة اللاعب الحقيقية إذا وجدت
+                    const imgEl = document.getElementById('p-photo');
+                    const svgEl = document.getElementById('p-placeholder');
+                    if(currentAuction.photo) {
+                        imgEl.src = currentAuction.photo;
+                        imgEl.style.display = "block";
+                        svgEl.style.display = "none";
+                    } else {
+                        imgEl.style.display = "none";
+                        svgEl.style.display = "block";
+                    }
                 }
 
-                // 3. تحديث الفائز بالصفقة
                 if(data.lastSold) {
                     const sold = data.lastSold;
                     if(sold.winner === myName && !myTeam.some(p => p.id === sold.id)) {
@@ -192,6 +211,7 @@
         }
 
         function aiStartAuction() {
+            if(!room) return alert("حدث خطأ في كود الغرفة!");
             const player = realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
             const timeLimit = parseInt(document.getElementById('custom-timer').value) || 20;
 
@@ -200,13 +220,14 @@
                 name: player.name,
                 pos: player.pos,
                 rating: player.rating,
+                photo: player.photo,
                 bid: 0,
                 bidder: "لا يوجد"
+            }).then(() => {
+                startTimer(timeLimit);
+            }).catch((err) => {
+                alert("خطأ في الاتصال بالفايربيس: " + err.message);
             });
-
-            // مزامنة العداد مع الجميع عبر Firebase
-            db.ref(`rooms/${room}/timer`).set({ left: timeLimit, active: true });
-            startTimer(timeLimit);
         }
 
         function startTimer(seconds) {
@@ -248,6 +269,7 @@
                 name: "تم البيع بنجاح!",
                 pos: "---",
                 rating: "--",
+                photo: "",
                 bidder: "المزاد انتهى",
                 bid: 0
             });
