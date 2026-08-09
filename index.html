@@ -3,80 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم - المطور</title>
+    <title>مزاد النجوم الاحترافي - Star Auction</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; text-align: center; padding: 15px; margin: 0; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; max-width: 500px; margin: 15px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-        input, button, select { padding: 12px; margin: 6px 0; width: 90%; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
-        button { background-color: #2563eb; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background-color: #1d4ed8; }
-        .bid-btn { background-color: #16a34a; margin: 5px; width: 42%; display: inline-block; }
-        .player-card { background: #334155; padding: 15px; border-radius: 10px; margin-top: 10px; border: 2px solid #3b82f6; }
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151c2c;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --text-main: #f3f4f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input { background: #1f293d; color: #fff; border: 1px solid #374151; }
+
+        button {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-bid {
+            background: linear-gradient(135deg, #10b981, #059669);
+            width: 48%;
+            display: inline-block;
+        }
+
+        /* كارت اللاعب الاحترافي */
+        .fut-card {
+            background: linear-gradient(135deg, #2a1b08 0%, #f59e0b 50%, #78350f 100%);
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+            margin: 15px 0;
+            border: 2px solid #fbbf24;
+        }
+
+        .fut-card .rating { font-size: 36px; font-weight: 900; line-height: 1; }
+        .fut-card .pos { font-size: 18px; font-weight: bold; text-transform: uppercase; }
+        .fut-card .name { font-size: 24px; font-weight: bold; margin: 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+
+        .price-tag {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 18px;
+            color: #facc15;
+            font-weight: bold;
+        }
+
         .hidden { display: none; }
-        .admin-panel { background: #475569; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .my-team { text-align: right; background: #0f172a; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px solid #38bdf8; }
-        .ai-box { background: #312e81; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 14px; color: #c7d2fe; }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mini-player-card {
+            background: #1f293d;
+            padding: 10px;
+            border-radius: 8px;
+            border-right: 4px solid var(--accent-blue);
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .ai-result {
+            background: #1e1b4b;
+            border: 1px solid #6366f1;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            text-align: right;
+            line-height: 1.6;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-    <h2>⚽ لعبة مزاد النجوم (المطورة)</h2>
+    <div class="container">
+        <h2>⚽ مزاد النجوم الاحترافي</h2>
 
-    <!-- 1. شاشة الدخول -->
-    <div id="setup-screen" class="card">
-        <h3>الدخول للعبة</h3>
-        <input type="text" id="username" placeholder="اسمك داخل اللعبة">
-        <input type="text" id="room-code" placeholder="كود الغرفة (مثال: 100)">
-        <button onclick="joinRoom(false)">دخول كـ لاعب</button>
-        <button onclick="joinRoom(true)" style="background:#7c3aed;">دخول كـ آدمن (منظم المزاد)</button>
-    </div>
-
-    <!-- 2. شاشة المزاد -->
-    <div id="game-screen" class="card hidden">
-        <h3 id="room-display">غرفة: --</h3>
-        
-        <!-- لوحة الآدمن -->
-        <div id="admin-panel" class="admin-panel hidden">
-            <h4>⚙️ لوحة الآدمن</h4>
-            <select id="player-select">
-                <option value="ليونيل ميسي|مهاجم|93|50">ليونيل ميسي (RW - 93)</option>
-                <option value="كريستيانو رونالدو|مهاجم|91|40">كريستيانو رونالدو (ST - 91)</option>
-                <option value="كيليان مبابي|مهاجم|92|45">كيليان مبابي (ST - 92)</option>
-                <option value="كيفين دي بروين|وسط|91|35">كيفين دي بروين (CM - 91)</option>
-                <option value="فيرجيل فان دايك|مدافع|89|30">فيرجيل فان دايك (CB - 89)</option>
-                <option value="محمد صلاح|مهاجم|90|40">محمد صلاح (RW - 90)</option>
-            </select>
-            <button onclick="startNewAuction()" style="background:#059669;">طرح اللاعب للمزاد</button>
-            <button onclick="finishAuction()" style="background:#dc2626;">إعادة حسم المزاد والمبيعات</button>
+        <!-- شاشة تسجيل الدخول -->
+        <div id="setup-screen" class="card">
+            <h3>انضمام للغرفة</h3>
+            <input type="text" id="username" placeholder="اسم المدرب">
+            <input type="text" id="room-code" placeholder="كود الغرفة (مثال: 777)">
+            <button onclick="joinRoom(false)">دخول كـ مدرب (لاعب)</button>
+            <button onclick="joinRoom(true)" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">دخول كـ منظم المزاد (آدمن)</button>
         </div>
 
-        <p>ميزانيتك المتبقية: <strong id="budget" style="color:#4ade80">100</strong> مليون $</p>
+        <!-- شاشة اللعب الرئيسية -->
+        <div id="game-screen" class="card hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span id="room-display" style="color:#9ca3af;">غرفة: --</span>
+                <span class="price-tag">💰 <span id="budget">100</span>M$</span>
+            </div>
 
-        <!-- كارت اللاعب -->
-        <div class="player-card">
-            <h3 id="player-name">بانتظار طرح لاعب...</h3>
-            <p>المركز: <span id="player-pos">-</span> | الطاقات: <span id="player-rating">-</span></p>
-            <hr style="border-color: #475569;">
-            <p>أعلى مزايدة: <strong id="current-bid" style="color:#facc15">0</strong> مليون $</p>
-            <p>أعلى مزايد: <strong id="highest-bidder" style="color:#38bdf8">لا يوجد</strong></p>
-        </div>
+            <!-- لوحة التحكم للآدمن -->
+            <div id="admin-panel" class="hidden" style="background:#1f293d; padding:15px; border-radius:12px; margin:15px 0;">
+                <h4 style="margin-top:0;">⚙️ لوحة منظم المزاد</h4>
+                <select id="player-select">
+                    <option value="ليونيل ميسي|RW|93|50">ليونيل ميسي (RW - 93)</option>
+                    <option value="كريستيانو رونالدو|ST|91|40">كريستيانو رونالدو (ST - 91)</option>
+                    <option value="كيليان مبابي|ST|92|45">كيليان مبابي (ST - 92)</option>
+                    <option value="كيفين دي بروين|CM|91|35">كيفين دي بروين (CM - 91)</option>
+                    <option value="فيرجيل فان دايك|CB|89|30">فيرجيل فان دايك (CB - 89)</option>
+                    <option value="محمد صلاح|RW|90|40">محمد صلاح (RW - 90)</option>
+                    <option value="جود بيلينجهام|CM|90|38">جود بيلينجهام (CM - 90)</option>
+                    <option value="مانويل نوير|GK|88|25">مانويل نوير (GK - 88)</option>
+                </select>
+                <button onclick="startAuction()" style="background:#059669;">طرح اللاعب للمزاد</button>
+                <button onclick="finishAuction()" style="background:#dc2626;">إعلان الفائز وحسم الصفقة</button>
+            </div>
 
-        <!-- أزرار المزايدة -->
-        <div style="margin-top: 15px;">
-            <button class="bid-btn" onclick="placeBid(5)">+5 مليون $</button>
-            <button class="bid-btn" onclick="placeBid(10)">+10 مليون $</button>
-        </div>
+            <!-- كارت اللاعب المعروض للمزاد -->
+            <div class="fut-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="rating" id="player-rating">--</div>
+                    <div class="pos" id="player-pos">---</div>
+                </div>
+                <div class="name" id="player-name">بانتظار المزاد...</div>
+                <div style="font-size:14px; opacity:0.9;">أعلى مزايدة حالية:</div>
+                <div style="font-size:28px; font-weight:bold; color:#fef08a;"><span id="current-bid">0</span> M$</div>
+                <div style="margin-top:5px; font-size:14px;">المزايد الحالي: <strong id="highest-bidder" style="color:#67e8f9;">لا يوجد</strong></div>
+            </div>
 
-        <!-- قائمة فريقي -->
-        <div class="my-team">
-            <h4>🏆 تشكيلتي الحالية:</h4>
-            <ul id="team-list" style="padding-right: 20px;">
-                <li>لم تشترِ أي لاعب بعد.</li>
-            </ul>
-            <button onclick="evaluateTeamAI()" style="background:#6366f1; width:100%;">🤖 تقييم التشكيلة بالذكاء الاصطناعي</button>
-            <div id="ai-evaluation" class="ai-box hidden"></div>
+            <!-- أزرار المزايدة -->
+            <div>
+                <button class="btn-bid" onclick="placeBid(5)">+5 مليون $</button>
+                <button class="btn-bid" onclick="placeBid(10)">+10 مليون $</button>
+            </div>
+
+            <!-- تشكيلة اللاعب -->
+            <div style="margin-top:25px; text-align:right;">
+                <h3>📋 تشكيلة فريقي (<span id="team-count">0</span>/11):</h3>
+                <div class="team-grid" id="team-grid">
+                    <div style="grid-column: span 2; color:#6b7280; text-align:center;">لم تقم بشراء أي لاعب بعد.</div>
+                </div>
+                
+                <button onclick="evaluateTeamAI()" style="margin-top:15px; background:linear-gradient(135deg, #4f46e5, #4338ca);">🤖 تحليل التشكيلة بالذكاء الاصطناعي</button>
+                <div id="ai-evaluation" class="ai-result hidden"></div>
+            </div>
         </div>
     </div>
 
@@ -98,7 +210,7 @@
         let playerName = "";
         let myBudget = 100;
         let isAdmin = false;
-        let myPlayers = [];
+        let myTeam = [];
 
         function joinRoom(adminMode) {
             playerName = document.getElementById('username').value.trim();
@@ -123,55 +235,51 @@
                 const data = snapshot.val();
                 if (data) {
                     if (data.auction) {
-                        const auction = data.auction;
-                        document.getElementById('player-name').innerText = auction.name;
-                        document.getElementById('player-pos').innerText = auction.pos;
-                        document.getElementById('player-rating').innerText = auction.rating;
-                        document.getElementById('current-bid').innerText = auction.currentBid;
-                        document.getElementById('highest-bidder').innerText = auction.highestBidder || "لا يوجد";
+                        const a = data.auction;
+                        document.getElementById('player-name').innerText = a.name;
+                        document.getElementById('player-pos').innerText = a.pos;
+                        document.getElementById('player-rating').innerText = a.rating;
+                        document.getElementById('current-bid').innerText = a.currentBid;
+                        document.getElementById('highest-bidder').innerText = a.highestBidder || "لا يوجد";
                     }
 
-                    // تحديث قائمة المشتريات والميزانية الشخصية إذا كنت الفائز بالمزاد
-                    if (data.lastSold && data.lastSold.winner === playerName && !myPlayers.some(p => p.name === data.lastSold.name)) {
-                        myPlayers.push(data.lastSold);
+                    if (data.lastSold && data.lastSold.winner === playerName && !myTeam.some(p => p.id === data.lastSold.id)) {
+                        myTeam.push(data.lastSold);
                         myBudget -= data.lastSold.price;
                         document.getElementById('budget').innerText = myBudget;
-                        updateTeamUI();
+                        renderTeamUI();
                     }
                 }
             });
         }
 
-        function startNewAuction() {
-            const rawData = document.getElementById('player-select').value.split('|');
-            const roomRef = database.ref('rooms/' + currentRoom + '/auction');
-            
-            roomRef.set({
-                name: rawData[0],
-                pos: rawData[1],
-                rating: parseInt(rawData[2]),
-                currentBid: parseInt(rawData[3]),
+        function startAuction() {
+            const raw = document.getElementById('player-select').value.split('|');
+            database.ref('rooms/' + currentRoom + '/auction').set({
+                id: Date.now(),
+                name: raw[0],
+                pos: raw[1],
+                rating: parseInt(raw[2]),
+                currentBid: parseInt(raw[3]),
                 highestBidder: "لا يوجد"
             });
         }
 
-        function placeBid(increment) {
+        function placeBid(inc) {
             const currentBid = parseInt(document.getElementById('current-bid').innerText) || 0;
-            const newBid = currentBid + increment;
+            const newBid = currentBid + inc;
 
             if (newBid > myBudget) {
-                alert("ميزانيتك لا تكفي!");
+                alert("ميزانيتك غير كافية!");
                 return;
             }
 
-            const roomRef = database.ref('rooms/' + currentRoom + '/auction');
-            roomRef.update({
+            database.ref('rooms/' + currentRoom + '/auction').update({
                 currentBid: newBid,
                 highestBidder: playerName
             });
         }
 
-        // حسم الصفقة واختيار الفائز باللاعب
         function finishAuction() {
             const bidder = document.getElementById('highest-bidder').innerText;
             const name = document.getElementById('player-name').innerText;
@@ -180,11 +288,12 @@
             const rating = parseInt(document.getElementById('player-rating').innerText);
 
             if (bidder === "لا يوجد") {
-                alert("لم يزايد أحد على هذا اللاعب!");
+                alert("لم يزايد أحد على اللاعب!");
                 return;
             }
 
             database.ref('rooms/' + currentRoom + '/lastSold').set({
+                id: Date.now(),
                 name: name,
                 price: price,
                 winner: bidder,
@@ -192,44 +301,58 @@
                 rating: rating
             });
 
-            alert(`مبروك! تم حسم صفقة ${name} لصالح ${bidder} بمبلغ ${price} مليون $`);
+            alert(`🎉 تم حسم المزاد لصالح ${bidder} بمبلغ ${price}M$!`);
         }
 
-        function updateTeamUI() {
-            const listElem = document.getElementById('team-list');
-            listElem.innerHTML = myPlayers.map(p => `<li><b>${p.name}</b> (${p.pos}) - طاقة: ${p.rating} | بسعر: ${p.price}M$</li>`).join('');
+        function renderTeamUI() {
+            const grid = document.getElementById('team-grid');
+            document.getElementById('team-count').innerText = myTeam.length;
+
+            if (myTeam.length === 0) return;
+
+            grid.innerHTML = myTeam.map(p => `
+                <div class="mini-player-card">
+                    <strong>${p.name}</strong> (${p.pos})
+                    <br><span style="color:#facc15;">طاقة: ${p.rating}</span> | <span style="color:#34d399;">${p.price}M$</span>
+                </div>
+            `).join('');
         }
 
-        // تحليلات الذكاء الاصطناعي للتشكيلة
         function evaluateTeamAI() {
             const aiBox = document.getElementById('ai-evaluation');
             aiBox.classList.remove('hidden');
 
-            if (myPlayers.length === 0) {
-                aiBox.innerText = "🤖 المدرب الذكي: تشكيلتك فارغة حالياً، اشترِ بعض اللاعبين أولاً لأستطيع تقييمك!";
+            if (myTeam.length === 0) {
+                aiBox.innerHTML = "🤖 <strong>المدرب الذكي:</strong> تشكيلتك فارغة حالياً. قم بشراء بعض اللاعبين لتلقي التحليل الخططي.";
                 return;
             }
 
             let totalRating = 0;
-            let positions = { 'مهاجم': 0, 'وسط': 0, 'مدافع': 0 };
+            let positions = { GK: 0, CB: 0, CM: 0, ST: 0, RW: 0 };
 
-            myPlayers.forEach(p => {
+            myTeam.forEach(p => {
                 totalRating += p.rating;
                 if (positions[p.pos] !== undefined) positions[p.pos]++;
             });
 
-            let avg = (totalRating / myPlayers.length).toFixed(1);
-            let evaluationText = `🤖 تقييم المدرب الذكي:\n- معدل طاقات فريقك: ${avg}/100.\n`;
+            let avgRating = (totalRating / myTeam.length).toFixed(1);
+            let chemistry = Math.min(100, myTeam.length * 10 + (positions.CM > 0 ? 15 : 0));
 
-            if (positions['مهاجم'] > 0 && positions['مدافع'] > 0) {
-                evaluationText += "- ممتاز! تشكيلة متوازنة بين الهجوم والدفاع ⚖️.";
-            } else if (positions['مهاجم'] > 1) {
-                evaluationText += "- هجومك قوي جداً لكن حذارِ من الضعف الدفاعي ⚠️!";
-            } else {
-                evaluationText += "- تحتاج لإضافة المزيد من التنوع في المراكز لتصبح خطتك مكتملة ⚽.";
+            let analysis = `🤖 <strong>تقرير المدرب الذكي (AI Coach):</strong><br>`;
+            analysis += `• <strong>معدل طاقات الفريق:</strong> ${avgRating} / 100<br>`;
+            analysis += `• <strong>تناغم التشكيلة (Chemistry):</strong> ${chemistry}%<br><br>`;
+
+            if (positions.GK === 0) {
+                analysis += `⚠️ <strong>ثغرة:</strong> فريقك يفتقر لحارس مرمى! ابحث عن حارس في المزاد القادم.<br>`;
+            }
+            if (positions.ST + positions.RW > 2) {
+                analysis += `🔥 <strong>القوة:</strong> خط هجوم كاسح وقادرة على تسجيل العديد من الأهداف.<br>`;
+            }
+            if (myBudget < 15) {
+                analysis += `💡 <strong>نصيحة مالية:</strong> ميزانيتك المنخفضة تتطلب الحذر في المزايدات القادمة.`;
             }
 
-            aiBox.innerText = evaluationText;
+            aiBox.innerHTML = analysis;
         }
     </script>
 </body>
