@@ -19,7 +19,8 @@
         .user-tag { background: #0369a1; border: 1px solid #38bdf8; color: white; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block; font-size: 11px; }
 
         .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
-        .player-avatar { width: 100px; height: 100px; margin: 10px auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .player-avatar { width: 110px; height: 110px; margin: 10px auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
         .name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #ffffff; }
@@ -76,13 +77,9 @@
                     <span class="pos" id="p-pos">---</span>
                 </div>
                 
-                <!-- مكان صورة اللاعب الحقيقية -->
+                <!-- مكان صورة اللاعب الحقيقية مع نظام معالجة الأخطاء الجذري -->
                 <div class="player-avatar">
-                    <img id="p-photo" src="" alt="صورة اللاعب" style="width:100%; height:100%; border-radius:50%; object-fit:cover; display:none;">
-                    <svg id="p-placeholder" width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    <img id="p-photo" src="" alt="صورة اللاعب" onerror="handleImageError(this)">
                 </div>
 
                 <div class="name" id="p-name">بانتظار المزاد...</div>
@@ -127,19 +124,31 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // قائمة اللاعبين تحتوي على صورهم المباشرة
+        // الصورة البديلة المضمونة عند وجود أي مشكلة في الإنترنت أو الرابط
+        const FALLBACK_IMG = "https://ui-avatars.com/api/?background=2e1065&color=fef08a&bold=true&name=";
+
+        // قائمة نجوم وأساطير الكرة مع روابط صور موثوقة ومباشرة
         const realAndIconPlayers = [
-            { name: "ليونيل ميسي", pos: "RW", rating: 90, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85007352.png" },
-            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, photo: "https://sortitoutsi.b-cdn.net/uploads/face/1202888.png" },
-            { name: "محمد صلاح", pos: "RW", rating: 89, photo: "https://sortitoutsi.b-cdn.net/uploads/face/28080880.png" },
-            { name: "كيليان مبابي", pos: "ST", rating: 91, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85139014.png" },
-            { name: "زين الدين زيدان", pos: "CAM", rating: 96, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85012586.png" },
-            { name: "بيليه (Pele)", pos: "CAM", rating: 98, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85002088.png" },
-            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, photo: "https://sortitoutsi.b-cdn.net/uploads/face/19302206.png" },
-            { name: "إيرلينج هالاند", pos: "ST", rating: 91, photo: "https://sortitoutsi.b-cdn.net/uploads/face/29179241.png" },
-            { name: "جود بيلينجهام", pos: "CAM", rating: 90, photo: "https://sortitoutsi.b-cdn.net/uploads/face/28108422.png" },
-            { name: "رونالدو الظاهرة", pos: "ST", rating: 96, photo: "https://sortitoutsi.b-cdn.net/uploads/face/85012558.png" }
+            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, photo: "https://media.thefootballmarket.com/players/vinicius.png" },
+            { name: "ليونيل ميسي", pos: "RW", rating: 90, photo: "https://media.thefootballmarket.com/players/messi.png" },
+            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, photo: "https://media.thefootballmarket.com/players/ronaldo.png" },
+            { name: "محمد صلاح", pos: "RW", rating: 89, photo: "https://media.thefootballmarket.com/players/salah.png" },
+            { name: "كيليان مبابي", pos: "ST", rating: 91, photo: "https://media.thefootballmarket.com/players/mbappe.png" },
+            { name: "إيرلينج هالاند", pos: "ST", rating: 91, photo: "https://media.thefootballmarket.com/players/haaland.png" },
+            { name: "جود بيلينجهام", pos: "CAM", rating: 90, photo: "https://media.thefootballmarket.com/players/bellingham.png" },
+            { name: "كيفين دي بروين", pos: "CM", rating: 90, photo: "https://media.thefootballmarket.com/players/debruyne.png" },
+            { name: "زين الدين زيدان", pos: "CAM", rating: 96, photo: "https://media.thefootballmarket.com/players/zidane.png" },
+            { name: "بيليه (Pele)", pos: "CAM", rating: 98, photo: "https://media.thefootballmarket.com/players/pele.png" },
+            { name: "رونالدو الظاهرة", pos: "ST", rating: 96, photo: "https://media.thefootballmarket.com/players/r9.png" },
+            { name: "رونالدينيو", pos: "LW", rating: 94, photo: "https://media.thefootballmarket.com/players/ronaldinho.png" }
         ];
+
+        // معالج أخطاء الصور التلقائي
+        function handleImageError(imgElement) {
+            imgElement.onerror = null; // لمنع الحلقة اللانهائية
+            const playerName = document.getElementById('p-name').innerText || "Player";
+            imgElement.src = FALLBACK_IMG + encodeURIComponent(playerName);
+        }
 
         function sanitizeKey(str) {
             return str.replace(/[.#$\[\]/]/g, "_").replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
@@ -184,16 +193,12 @@
                     document.getElementById('c-bid').innerText = currentAuction.bid || 0;
                     document.getElementById('c-bidder').innerText = currentAuction.bidder || "لا يوجد";
 
-                    // عرض صورة اللاعب الحقيقية إذا وجدت
+                    // تحديث الصورة
                     const imgEl = document.getElementById('p-photo');
-                    const svgEl = document.getElementById('p-placeholder');
                     if(currentAuction.photo) {
                         imgEl.src = currentAuction.photo;
-                        imgEl.style.display = "block";
-                        svgEl.style.display = "none";
                     } else {
-                        imgEl.style.display = "none";
-                        svgEl.style.display = "block";
+                        imgEl.src = FALLBACK_IMG + encodeURIComponent(currentAuction.name || "Player");
                     }
                 }
 
