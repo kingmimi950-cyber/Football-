@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم الأسطوري - Trade & Ultimate Auction</title>
+    <title>مزاد النجوم - Multi-Room Ultimate Auction</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
@@ -12,7 +12,7 @@
             --accent-gold: #f59e0b;
             --accent-green: #10b981;
             --accent-red: #ef4444;
-            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
         }
 
         body {
@@ -91,11 +91,7 @@
             min-height: 180px;
         }
 
-        .pitch-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
+        .pitch-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
         .pitch-card {
             background: rgba(0, 0, 0, 0.6);
@@ -109,13 +105,26 @@
 
         .news-ticker {
             background: #1e1b4b; color: #facc15; padding: 10px; border-radius: 10px;
-            font-size: 14px; font-weight: bold; margin-bottom: 10px; overflow: hidden; white-space: nowrap;
-            border: 1px solid #6366f1;
+            font-size: 14px; font-weight: bold; margin-bottom: 10px; border: 1px solid #6366f1;
         }
 
         .trade-box {
             background: #1e293b; border: 1px solid #3b82f6; padding: 15px; border-radius: 14px; margin-top: 15px; text-align: right;
         }
+
+        .players-online-box {
+            background: #0f172a; border: 1px solid #38bdf8; border-radius: 12px; padding: 10px; margin-bottom: 15px; text-align: right;
+        }
+
+        .badge-online {
+            display: inline-block; width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; margin-left: 5px;
+        }
+
+        .chat-btns { display: flex; gap: 5px; overflow-x: auto; padding: 5px 0; margin-top: 10px; }
+        .chat-btn { background: #334155; color: #fff; font-size: 12px; padding: 6px 12px; border-radius: 8px; white-space: nowrap; width: auto; }
+
+        .leaderboard-table { width: 100%; font-size: 13px; margin-top: 8px; border-collapse: collapse; text-align: right; }
+        .leaderboard-table th, .leaderboard-table td { padding: 6px; border-bottom: 1px solid #334155; }
 
         .hidden { display: none; }
     </style>
@@ -127,28 +136,51 @@
     <div class="container">
         <h2>⚽ مزاد النجوم الأسطوري</h2>
 
-        <!-- شريط الأخبار والتعليق -->
-        <div id="news-ticker" class="news-ticker">🎙️ مرحباً بكم في سوق الانتقالات والمزادات!</div>
+        <!-- شريط الأخبار والشات -->
+        <div id="news-ticker" class="news-ticker">🎙️ مرحباً بك! أنشئ غرفة خاصة بك أو انضم لغرفة موجودة.</div>
 
-        <!-- 1. شاشة الدخول -->
+        <!-- 1. شاشة إنشاء وتحديد الغرف -->
         <div id="setup-screen" class="card">
-            <h3>🎮 انضمام للغرفة</h3>
-            <input type="text" id="username" placeholder="اسم المدرب (اسمك)">
-            <input type="text" id="room-code" placeholder="كود الغرفة (مثال: 999)">
+            <h3>🏠 انضمام أو إنشاء غرفة جديدة</h3>
+            <input type="text" id="username" placeholder="اسمك (اسم المدرب)">
+            <input type="text" id="room-code" placeholder="كود الغرفة الخاصة (مثال: brother123 أو friend99)">
             
+            <label style="font-size:12px; color:#cbd5e1; display:block; margin-top:5px; text-align:right;">نوع طابع الغرفة:</label>
+            <select id="room-type">
+                <option value="normal">⚽ مزاد عادي (20 ثانية - ميزانية مخصصة)</option>
+                <option value="blitz">⚡ مزايدات خاطفة (7 ثوانٍ - ميزانية 150M)</option>
+                <option value="legends">👑 غرفة الأساطير (15 ثانية - ميزانية 300M)</option>
+                <option value="budget">💡 تحدي الميزانية الصعبة (15 ثانية - ميزانية 50M)</option>
+            </select>
+
             <div id="admin-budget-box" style="margin-top:10px;">
-                <label style="font-size:13px; color:#9ca3af;">الميزانية الموحدة للجميع (للآدمن فقط):</label>
+                <label style="font-size:12px; color:#9ca3af;">الميزانية الموحدة (إذا كنت منشئ الغرفة):</label>
                 <input type="number" id="start-budget" value="200" placeholder="الميزانية بالمليون">
             </div>
 
-            <button onclick="joinRoom(false)">دخول كـ مدرب</button>
-            <button onclick="joinRoom(true)" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">دخول كـ منظم المزاد (آدمن)</button>
+            <button onclick="joinRoom(false)">دخول الغرفة كـ مدرب</button>
+            <button onclick="joinRoom(true)" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">إنشاء/دخول الغرفة كـ منظم المزاد (آدمن)</button>
         </div>
 
-        <!-- 2. شاشة المزاد واللعب -->
+        <!-- 2. شاشة اللعب والمزاد -->
         <div id="game-screen" class="card hidden">
+            
+            <!-- قائمة المتواجدين أونلاين والشات السريع -->
+            <div class="players-online-box">
+                <div style="font-weight:bold; color:#38bdf8; font-size:14px;">👥 المتواجدون في الغرفة الآن:</div>
+                <div id="online-players-list" style="margin-top:5px; font-size:13px; color:#cbd5e1;">جاري التحديث...</div>
+                
+                <!-- أزرار الشات السريع -->
+                <div class="chat-btns">
+                    <button class="chat-btn" onclick="sendQuickChat('أنا زايدت عليك! 🔥')">🔥 زايدت عليك</button>
+                    <button class="chat-btn" onclick="sendQuickChat('السعر ده غالي جداً! 💸')">💸 السعر غالي</button>
+                    <button class="chat-btn" onclick="sendQuickChat('مبروك عليك اللاعب! 👏')">👏 مبروك عليك</button>
+                    <button class="chat-btn" onclick="sendQuickChat('اللاعب ده بتاعي محدش يزود! 😎')">😎 اللاعب بتاعي</button>
+                </div>
+            </div>
+
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span id="room-display" style="color:#9ca3af;">غرفة: --</span>
+                <span id="room-display" style="color:#9ca3af; font-weight:bold;">غرفة: --</span>
                 <span style="background:#1e293b; padding:6px 14px; border-radius:20px; font-weight:bold; color:#4ade80;">
                     💰 الميزانية: <span id="budget">200</span>M$
                 </span>
@@ -158,20 +190,20 @@
             <div id="admin-panel" class="hidden" style="background:#1c2436; padding:15px; border-radius:14px; margin:15px 0; border:1px solid #3b82f6;">
                 <h4 style="margin:0 0 8px 0; color:#60a5fa;">⚙️ لوحة التحكم والإدارة</h4>
                 <select id="player-select">
-                    <optgroup label="🔥 المهاجمون (ST / RW / LW)">
+                    <optgroup label="🔥 المهاجمون">
                         <option value="ليونيل ميسي|RW|93|0">ليونيل ميسي (93)</option>
                         <option value="كريستيانو رونالدو|ST|91|0">كريستيانو رونالدو (91)</option>
                         <option value="كيليان مبابي|ST|92|0">كيليان مبابي (92)</option>
                         <option value="إيرلينج هالاند|ST|91|0">إيرلينج هالاند (91)</option>
                         <option value="محمد صلاح|RW|90|0">محمد صلاح (90)</option>
-                        <option value="فينيسيوس جونيور|LW|89|0">فينيسيوس جونيور (89)</option>
+                        <option value="لامين يامال|RW|88|0">لامين يامال (88) ⭐جديد</option>
                     </optgroup>
-                    <optgroup label="🧠 خط الوسط (CM / CAM / CDM)">
+                    <optgroup label="🧠 خط الوسط">
                         <option value="كيفين دي بروين|CAM|91|0">كيفين دي بروين (91)</option>
                         <option value="جود بيلينجهام|CM|90|0">جود بيلينجهام (90)</option>
-                        <option value="رودري|CDM|89|0">رودري (89)</option>
+                        <option value="جمال موسيالا|CAM|88|0">جمال موسيالا (88) ⭐جديد</option>
                     </optgroup>
-                    <optgroup label="🛡️ الدفاع والحراس (CB / RB / LB / GK)">
+                    <optgroup label="🛡️ الدفاع والحراس">
                         <option value="فيرجيل فان دايك|CB|89|0">فيرجيل فان دايك (89)</option>
                         <option value="أشرف حكيمي|RB|84|0">أشرف حكيمي (84)</option>
                         <option value="تيبو كورتوا|GK|90|0">تيبو كورتوا (90)</option>
@@ -181,10 +213,11 @@
                         <option value="دييجو مارادونا|CAM|97|0">دييجو مارادونا (97)</option>
                         <option value="زين الدين زيدان|CAM|95|0">زين الدين زيدان (95)</option>
                         <option value="رونالدو الظاهرة|ST|96|0">رونالدو الظاهرة (96)</option>
+                        <option value="باولو مالديني|CB|95|0">باولو مالديني (95) ⭐جديد</option>
                     </optgroup>
                 </select>
                 <div style="display:flex; gap:8px;">
-                    <button onclick="startAuction()" style="background:#059669;">طرح للمزاد (20 ثانية)</button>
+                    <button onclick="startAuction()" style="background:#059669;">طرح للمزاد 🚀</button>
                     <button onclick="finishAuction()" style="background:#dc2626;">إنهاء وحسم فوري</button>
                 </div>
             </div>
@@ -207,12 +240,29 @@
                 </div>
             </div>
 
-            <!-- أزرار المزايدات المباشرة والمحددة -->
+            <!-- أزرار المزايدة -->
             <div class="bid-btns">
                 <button class="btn-bid" onclick="placeBid(5)">+5M$</button>
                 <button class="btn-bid" onclick="placeBid(10)">+10M$</button>
                 <button class="btn-bid" onclick="placeBid(15)">+15M$</button>
                 <button class="btn-bid" onclick="placeBid(20)">+20M$</button>
+            </div>
+
+            <!-- جدول ترتيب المنافسين اللحظي -->
+            <div style="background:#1e293b; border-radius:12px; padding:12px; margin-top:15px; text-align:right;">
+                <h4 style="margin:0 0 5px 0; color:#facc15;">📊 جدول ترتيب ميزانيات المنافسين:</h4>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr style="color:#9ca3af;">
+                            <th>المدرب</th>
+                            <th>الميزانية المتبقية</th>
+                            <th>عدد اللاعبين</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="3">جاري تحميل البيانات...</td></tr>
+                    </tbody>
+                </table>
             </div>
 
             <!-- ملعب التشكيلة -->
@@ -221,15 +271,15 @@
                 <div class="pitch">
                     <div class="pitch-grid" id="pitch-grid">
                         <div style="grid-column: span 2; color:#d1fae5; text-align:center; padding:20px;">
-                            الملعب فارغ! اشترك في المزايدات لبناء فريقك الأسطوري.
+                            الملعب فارغ! اشترك في المزايدات لبناء فريقك.
                         </div>
                     </div>
                 </div>
 
-                <!-- سوق الانتقالات والمبادلة (Trade Market) -->
+                <!-- سوق البيع والمبادلة -->
                 <div class="trade-box">
-                    <h4 style="margin:0 0 10px 0; color:#60a5fa;">🔄 سوق الانتقالات والمبادلة السريعة:</h4>
-                    <label style="font-size:12px; color:#cbd5e1;">اختر لاعباً من فريقك لبيعه للبنك (استرداد 70% من السعر):</label>
+                    <h4 style="margin:0 0 10px 0; color:#60a5fa;">🔄 سوق البيع السريع:</h4>
+                    <label style="font-size:12px; color:#cbd5e1;">بيع لاعب لاسترداد 70% من ميزانيته:</label>
                     <div style="display:flex; gap:8px; margin-top:5px;">
                         <select id="sell-player-select"><option value="">-- اختر لاعب --</option></select>
                         <button onclick="sellPlayerBack()" style="background:#dc2626; width:40%;">بيع للبنك 💸</button>
@@ -238,15 +288,11 @@
                 
                 <!-- محاكاة وتقييم AI -->
                 <div style="display:flex; gap:8px; margin-top:15px;">
-                    <button onclick="evaluateTeamAI()" style="background:linear-gradient(135deg, #6366f1, #4f46e5); font-size:14px;">
-                        🤖 تقييم AI
-                    </button>
-                    <button onclick="simulateMatch()" style="background:linear-gradient(135deg, #ea580c, #c2410c); font-size:14px;">
-                        🎮 محاكاة مباراة
-                    </button>
+                    <button onclick="evaluateTeamAI()" style="background:linear-gradient(135deg, #6366f1, #4f46e5); font-size:14px;">🤖 تقييم AI</button>
+                    <button onclick="simulateMatch()" style="background:linear-gradient(135deg, #ea580c, #c2410c); font-size:14px;">🎮 محاكاة مباراة</button>
                 </div>
                 
-                <div id="ai-evaluation" style="background:#1e1b4b; border:1px solid #6366f1; padding:15px; border-radius:12px; margin-top:12px; text-align:right; line-height:1.6;" class="hidden"></div>
+                <div id="ai-evaluation" style="background:#1e1b4b; border:1px solid #6366f1; padding:15px; border-radius:12px; margin-top:12px; text-align:right;" class="hidden"></div>
                 <div id="match-result" style="background:#064e3b; border:1px solid #10b981; padding:15px; border-radius:12px; margin-top:12px; text-align:center;" class="hidden"></div>
             </div>
         </div>
@@ -266,7 +312,6 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // مكتبة الصوتية والأصوات التفاعلية (SFX & Commentary)
         const soundBid = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         const soundWin = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
         const soundWhistle = new Audio('https://assets.mixkit.co/active_storage/sfx/2032/2032-preview.mp3');
@@ -274,6 +319,7 @@
         let currentRoom = "";
         let playerName = "";
         let myBudget = 200;
+        let auctionTimerDuration = 20;
         let isAdmin = false;
         let myTeam = [];
         let timerInterval = null;
@@ -291,25 +337,51 @@
         function joinRoom(adminMode) {
             playerName = document.getElementById('username').value.trim();
             currentRoom = document.getElementById('room-code').value.trim();
+            const roomType = document.getElementById('room-type').value;
             isAdmin = adminMode;
 
             if (!playerName || !currentRoom) {
-                alert("يرجى إدخال اسمك وكود الغرفة!");
+                alert("يرجى إدخال اسمك وكود الغرفة الفريد!");
                 return;
+            }
+
+            if (roomType === "blitz") { myBudget = 150; auctionTimerDuration = 7; }
+            else if (roomType === "legends") { myBudget = 300; auctionTimerDuration = 15; }
+            else if (roomType === "budget") { myBudget = 50; auctionTimerDuration = 15; }
+            else {
+                myBudget = parseInt(document.getElementById('start-budget').value) || 200;
+                auctionTimerDuration = 20;
             }
 
             const roomRef = database.ref('rooms/' + currentRoom);
 
             if (isAdmin) {
-                const startBudgetInput = parseInt(document.getElementById('start-budget').value) || 200;
-                roomRef.child('config').set({ roomBudget: startBudgetInput });
+                roomRef.child('config').set({ 
+                    roomBudget: myBudget,
+                    timerDuration: auctionTimerDuration 
+                });
             }
+
+            // تسجيل حضور اللاعب أونلاين وتحديث ميزانيته
+            const playerRef = roomRef.child('players/' + playerName);
+            playerRef.set({
+                name: playerName,
+                budget: myBudget,
+                teamCount: 0,
+                online: true
+            });
+            playerRef.onDisconnect().remove();
 
             roomRef.child('config').on('value', (snapshot) => {
                 const config = snapshot.val();
-                if (config && config.roomBudget) {
-                    myBudget = config.roomBudget;
-                    document.getElementById('budget').innerText = myBudget;
+                if (config) {
+                    if (config.roomBudget) {
+                        myBudget = config.roomBudget;
+                        document.getElementById('budget').innerText = myBudget;
+                    }
+                    if (config.timerDuration) {
+                        auctionTimerDuration = config.timerDuration;
+                    }
                 }
             });
 
@@ -321,6 +393,33 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
             }
 
+            // مراقبة المتواجدين وجدول الترتيب
+            roomRef.child('players').on('value', (snapshot) => {
+                const players = snapshot.val();
+                if (players) {
+                    const onlineNames = Object.keys(players).map(p => `<span style="margin-left:8px;"><span class="badge-online"></span>${p}</span>`).join(' ');
+                    document.getElementById('online-players-list').innerHTML = onlineNames;
+
+                    const leaderboardRows = Object.values(players).map(p => `
+                        <tr>
+                            <td><b>${p.name}</b> ${p.name === playerName ? '(أنت)' : ''}</td>
+                            <td style="color:#4ade80;">${p.budget}M$</td>
+                            <td>${p.teamCount || 0}</td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('leaderboard-body').innerHTML = leaderboardRows;
+                }
+            });
+
+            // مراقبة الشات
+            roomRef.child('chat').on('value', (snapshot) => {
+                const chatData = snapshot.val();
+                if (chatData) {
+                    document.getElementById('news-ticker').innerText = `💬 ${chatData.sender}: ${chatData.message}`;
+                }
+            });
+
+            // مراقبة المزاد
             roomRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
@@ -334,20 +433,35 @@
                     }
 
                     if (data.lastSold) {
-                        const newsText = `حسم صفقة ${data.lastSold.name} لصالح ${data.lastSold.winner} بمبلغ ${data.lastSold.price} مليون`;
+                        const newsText = `حسم صفقة ${data.lastSold.name} لصالح ${data.lastSold.winner} بمبلغ ${data.lastSold.price}M$`;
                         document.getElementById('news-ticker').innerText = `📢 خبر عاجل: ${newsText}`;
                         
                         if (data.lastSold.winner === playerName && !myTeam.some(p => p.id === data.lastSold.id)) {
                             myTeam.push(data.lastSold);
                             myBudget -= data.lastSold.price;
                             document.getElementById('budget').innerText = myBudget;
+                            
+                            // تحديث الميزانية عند باقي اللاعبين
+                            database.ref('rooms/' + currentRoom + '/players/' + playerName).update({
+                                budget: myBudget,
+                                teamCount: myTeam.length
+                            });
+
                             soundWin.play();
-                            speakCommentary(`مبروك! ${data.lastSold.name} ينضم رسمياً إلى فريقك`);
+                            speakCommentary(`مبروك! ${data.lastSold.name} ينضم إلى فريقك`);
                             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                             renderPitchUI();
                         }
                     }
                 }
+            });
+        }
+
+        function sendQuickChat(msg) {
+            database.ref('rooms/' + currentRoom + '/chat').set({
+                sender: playerName,
+                message: msg,
+                time: Date.now()
             });
         }
 
@@ -364,9 +478,9 @@
 
             database.ref('rooms/' + currentRoom + '/auction').set(auctionData);
             soundWhistle.play();
-            speakCommentary(`بدأ المزاد الآن على اللاعب ${raw[0]}`);
+            speakCommentary(`بدأ المزاد الآن على ${raw[0]}`);
 
-            let timeLeft = 20;
+            let timeLeft = auctionTimerDuration;
             document.getElementById('timer-box').classList.remove('hidden');
             document.getElementById('timer').innerText = timeLeft;
 
@@ -466,7 +580,12 @@
             myTeam.splice(idx, 1);
             renderPitchUI();
 
-            speakCommentary(`تم بيع ${p.name} واسترداد ${refund} مليون`);
+            database.ref('rooms/' + currentRoom + '/players/' + playerName).update({
+                budget: myBudget,
+                teamCount: myTeam.length
+            });
+
+            speakCommentary(`تم بيع ${p.name} وإعادة ${refund} مليون`);
             alert(`تم بيع ${p.name} وإعادة ${refund}M$ للميزانية!`);
         }
 
@@ -498,7 +617,7 @@
             let goals = Math.floor(Math.random() * 4) + 1;
             let star = myTeam[Math.floor(Math.random() * myTeam.length)].name;
 
-            speakCommentary(`انتهت المباراة بفوز فريقك بـ ${goals} أهداف وكان ${star} هو نجم اللقاء`);
+            speakCommentary(`فاز فريقك بـ ${goals} أهداف وكان ${star} رجل المباراة`);
             matchBox.innerHTML = `⚽ <strong>نتيجة المباراة التجريبية:</strong><br>فريقك فاز بنتيجة <b>${goals} - 0</b>!<br>🌟 رجل المباراة: <b>${star}</b>.`;
         }
     </script>
