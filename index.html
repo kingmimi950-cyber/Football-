@@ -14,20 +14,22 @@
         input, button { width: 100%; padding: 10px; margin: 4px 0; border-radius: 8px; border: 1px solid #30363d; background: #21262d; color: #fff; box-sizing: border-box; }
         button { background: var(--blue); font-weight: bold; cursor: pointer; border: none; }
         button:active { transform: scale(0.98); }
+        
+        .members-box { background: #0f172a; border: 1px solid var(--blue); border-radius: 10px; padding: 8px; margin-bottom: 10px; font-size: 13px; text-align: right; }
+        .user-tag { background: #0369a1; border: 1px solid #38bdf8; color: white; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block; font-size: 11px; }
+
         .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
-        .player-avatar { width: 110px; height: 110px; margin: 0 auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; }
+        .player-avatar { width: 100px; height: 100px; margin: 10px auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; }
         .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
-        .name { font-size: 20px; font-weight: bold; margin: 6px 0; }
+        .name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #fff; }
         .timer-badge { background: var(--red); padding: 4px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
         .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
-        .btn-bid { background: var(--green); padding: 10px 0; }
+        .btn-bid { background: var(--green); padding: 10px 0; font-weight: bold; }
         .btn-finish { background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; font-size: 15px; margin-top: 6px; padding: 12px; border-radius: 10px; }
         .pitch-box { background: #14532d; border: 1px solid #22c55e; border-radius: 10px; padding: 8px; margin-top: 8px; font-size: 12px; }
-        .members-box { background: #0f172a; border: 1px solid var(--blue); border-radius: 10px; padding: 8px; margin-bottom: 10px; font-size: 13px; text-align: right; }
         .player-tag { background: #1e293b; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
-        .user-tag { background: #0369a1; border: 1px solid #38bdf8; color: white; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block; font-size: 11px; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -47,40 +49,40 @@
 
         <!-- شاشة اللعبة -->
         <div id="game-screen" class="card hidden">
-            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
                 <span id="room-txt">غرفة: --</span>
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- قائمة المدربين الحاضرين بالغرفة -->
+            <!-- قائمة المدربين المتواجدين بالغرفة -->
             <div class="members-box">
-                <b>👥 المدربين المتواجدين الآن:</b>
-                <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري التحديث...</span></div>
+                <b>👥 المتواجدون بالروم الآن:</b>
+                <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري الاتصال...</span></div>
             </div>
 
-            <!-- لوحة الآدمن -->
-            <div id="admin-panel" class="card hidden" style="background:#1f2937; margin-top:8px;">
+            <!-- لوحة التحكم للآدمن -->
+            <div id="admin-panel" class="card hidden" style="background:#1f2937;">
                 <input type="number" id="custom-timer" value="20" placeholder="الوقت بالثواني">
                 <button onclick="aiStartAuction()" style="background:var(--purple);">🤖 طرح لاعب / أسطورة جديد</button>
             </div>
 
-            <!-- العداد -->
+            <!-- عداد الوقت -->
             <div id="timer-box" class="timer-badge hidden">⏱️ المتبقي: <span id="timer">20</span> ثانية</div>
 
-            <!-- كارت اللاعب المضمون 100% -->
+            <!-- كارت اللاعب -->
             <div class="fut-card">
-                <div style="display:flex; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div class="rating" id="p-rating">--</div>
                     <span class="pos" id="p-pos">---</span>
                 </div>
                 <div class="player-avatar">
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="55" height="55" viewBox="0 0 24 24" fill="none" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                 </div>
                 <div class="name" id="p-name">بانتظار المزاد...</div>
-                <div style="background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
+                <div style="background:rgba(0,0,0,0.4); padding:8px; border-radius:8px; margin-top:6px;">
                     <div>أعلى سومة: <strong id="c-bid" style="color:var(--gold);">0</strong> M$</div>
                     <div>المزايد الحالي: <strong id="c-bidder" style="color:#38bdf8;">لا يوجد</strong></div>
                 </div>
@@ -121,7 +123,6 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // قائمة نجوم وأسطوريات ثابته
         const realAndIconPlayers = [
             { name: "ليونيل ميسي", pos: "CF", rating: 90 },
             { name: "كريستيانو رونالدو", pos: "ST", rating: 86 },
@@ -130,59 +131,53 @@
             { name: "زين الدين زيدان", pos: "CAM", rating: 96 },
             { name: "بيليه (Pele)", pos: "CAM", rating: 98 },
             { name: "مارادونا (Maradona)", pos: "CAM", rating: 97 },
-            { name: "رونالدو الظاهرة (R9)", pos: "ST", rating: 96 },
+            { name: "رونالدو الظاهرة", pos: "ST", rating: 96 },
             { name: "إيرلينج هالاند", pos: "ST", rating: 91 },
             { name: "جود بيلينجهام", pos: "CAM", rating: 90 },
             { name: "لوكا مودريتش", pos: "CM", rating: 87 },
-            { name: "فينيسيوس جونيور", pos: "LW", rating: 89 },
-            { name: "باتريك فييرا", pos: "CM", rating: 91 },
-            { name: "يوهان كرويف", pos: "CF", rating: 94 }
+            { name: "فينيسيوس جونيور", pos: "LW", rating: 89 }
         ];
-
-        function getRandomAuctionPlayer() {
-            return realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
-        }
 
         function joinGame(admin) {
             myName = document.getElementById('username').value.trim();
             room = document.getElementById('room-code').value.trim();
             isAdmin = admin;
-            if(!myName || !room) return alert("اكتب الاسم وكود الغرفة!");
+            if(!myName || !room) return alert("يرجى إدخال اسمك وكود الغرفة!");
 
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('room-txt').innerText = `غرفة: ${room}`;
             if(isAdmin) document.getElementById('admin-panel').classList.remove('hidden');
 
-            // تسجيل حضور اللاعب في الروم بالـ Firebase
+            // إضافة الحضور للروم
             const userRef = db.ref(`rooms/${room}/users/${myName}`);
-            userRef.set({ name: myName, role: isAdmin ? "آدمن 👑" : "مدرب ⚽" });
+            userRef.set({ name: myName, role: isAdmin ? "👑 آدمن" : "⚽ مدرب" });
             userRef.onDisconnect().remove();
 
-            // الاستماع المتزامن لكل أحداث الغرفة
+            // الاستماع المباشر للتغييرات
             db.ref(`rooms/${room}`).on('value', (snap) => {
                 const data = snap.val();
                 if(!data) return;
 
-                // تحديث قائمة المتواجدين
+                // 1. تحديث قائمة اللاعبين المتواجدين
                 if(data.users) {
-                    const userListHtml = Object.values(data.users).map(u => `
+                    const usersHtml = Object.values(data.users).map(u => `
                         <span class="user-tag">${u.name} (${u.role})</span>
                     `).join('');
-                    document.getElementById('room-users').innerHTML = userListHtml;
+                    document.getElementById('room-users').innerHTML = usersHtml;
                 }
 
-                // تحديث الكارت المباشر
+                // 2. تحديث كارت اللاعب الحالي
                 if(data.auction) {
                     currentAuction = data.auction;
-                    document.getElementById('p-name').innerText = currentAuction.name;
-                    document.getElementById('p-pos').innerText = currentAuction.pos;
-                    document.getElementById('p-rating').innerText = currentAuction.rating;
-                    document.getElementById('c-bid').innerText = currentAuction.bid;
-                    document.getElementById('c-bidder').innerText = currentAuction.bidder;
+                    document.getElementById('p-name').innerText = currentAuction.name || "بانتظار المزاد...";
+                    document.getElementById('p-pos').innerText = currentAuction.pos || "---";
+                    document.getElementById('p-rating').innerText = currentAuction.rating || "--";
+                    document.getElementById('c-bid').innerText = currentAuction.bid || 0;
+                    document.getElementById('c-bidder').innerText = currentAuction.bidder || "لا يوجد";
                 }
 
-                // استقبال نتيجة الصفقة
+                // 3. تحديث الفائز بالصفقة
                 if(data.lastSold) {
                     const sold = data.lastSold;
                     if(sold.winner === myName && !myTeam.some(p => p.id === sold.id)) {
@@ -197,7 +192,7 @@
         }
 
         function aiStartAuction() {
-            const player = getRandomAuctionPlayer();
+            const player = realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
             const timeLimit = parseInt(document.getElementById('custom-timer').value) || 20;
 
             db.ref(`rooms/${room}/auction`).set({
@@ -208,6 +203,9 @@
                 bid: 0,
                 bidder: "لا يوجد"
             });
+
+            // مزامنة العداد مع الجميع عبر Firebase
+            db.ref(`rooms/${room}/timer`).set({ left: timeLimit, active: true });
             startTimer(timeLimit);
         }
 
@@ -228,15 +226,15 @@
         }
 
         function bid(inc) {
-            if(!currentAuction) return;
-            const newBid = currentAuction.bid + inc;
-            if(newBid > myBudget) return alert("الميزانية لا تكفي!");
+            if(!currentAuction || currentAuction.name === "تم البيع بنجاح!") return;
+            const newBid = (currentAuction.bid || 0) + inc;
+            if(newBid > myBudget) return alert("ميزانيتك لا تكفي لهذه السومة!");
             db.ref(`rooms/${room}/auction`).update({ bid: newBid, bidder: myName });
         }
 
         function finishAuction() {
             if(!currentAuction || currentAuction.bidder === "لا يوجد") {
-                return alert("لا توجد مزايدة قائمة لحسمها بعد!");
+                return alert("لا توجد مزايدة قائمة لحسمها!");
             }
             db.ref(`rooms/${room}/lastSold`).set({
                 id: currentAuction.id,
@@ -246,7 +244,13 @@
                 price: currentAuction.bid,
                 winner: currentAuction.bidder
             });
-            db.ref(`rooms/${room}/auction`).update({ name: "تم البيع بنجاح!", bidder: "المزاد انتهى", bid: 0 });
+            db.ref(`rooms/${room}/auction`).set({
+                name: "تم البيع بنجاح!",
+                pos: "---",
+                rating: "--",
+                bidder: "المزاد انتهى",
+                bid: 0
+            });
             clearInterval(timerInterval);
             document.getElementById('timer-box').classList.add('hidden');
         }
