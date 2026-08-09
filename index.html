@@ -35,7 +35,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        /* توقيع وشعار المطور */
+        /* توقيع المطور */
         .developer-badge {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(168, 85, 247, 0.15));
             border: 1px solid var(--accent-gold);
@@ -74,6 +74,7 @@
         .bid-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
         .btn-bid { background: linear-gradient(135deg, #059669, #10b981); padding: 14px 5px; font-size: 15px; font-weight: bold; }
 
+        /* بطاقة FUT مع دعم صورة اللاعب */
         .fut-card {
             background: linear-gradient(145deg, #1e1b4b 0%, #311042 50%, #701a75 100%);
             border: 2px solid var(--accent-gold);
@@ -83,6 +84,22 @@
             position: relative;
             box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
             margin: 15px 0;
+        }
+
+        .player-img-box {
+            width: 110px;
+            height: 110px;
+            margin: 0 auto;
+            border-radius: 50%;
+            border: 2px solid var(--accent-gold);
+            overflow: hidden;
+            background: #000;
+        }
+
+        .player-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .rating-box { font-size: 42px; font-weight: 900; color: #fef08a; line-height: 1; }
@@ -97,7 +114,7 @@
 
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
 
-        /* شريط قوة التشكيلة والتناغم (خيار 3) */
+        /* شريط الإحصائيات */
         .team-stats-box {
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid var(--accent-gold);
@@ -109,16 +126,8 @@
             align-items: center;
         }
 
-        .stat-item {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .stat-value {
-            color: #facc15;
-            font-size: 18px;
-            font-weight: 900;
-        }
+        .stat-item { font-size: 14px; font-weight: bold; }
+        .stat-value { color: #facc15; font-size: 18px; font-weight: 900; }
 
         /* الملعب المرئي */
         .visual-pitch {
@@ -202,36 +211,36 @@
 
             <!-- لوحة الآدمن -->
             <div id="admin-panel" class="hidden" style="background:#1c2436; padding:15px; border-radius:14px; margin:15px 0; border:1px solid #3b82f6;">
-                <h4 style="margin:0 0 8px 0; color:#60a5fa;">⚙️ إدارة المزاد</h4>
+                <h4 style="margin:0 0 8px 0; color:#60a5fa;">⚙️ إدارة المزاد (لوحة التحكم)</h4>
+                
                 <select id="player-select">
                     <optgroup label="🔥 نجوم العالم">
-                        <option value="فينيسيوس جونيور|LW|91|0">فينيسيوس جونيور (91)</option>
-                        <option value="كيفين دي بروين|CAM|91|0">كيفين دي بروين (91)</option>
-                        <option value="محمد صلاح|RW|90|0">محمد صلاح (90)</option>
-                        <option value="هاري كين|ST|91|0">هاري كين (91)</option>
-                        <option value="فيرجيل فان دايك|CB|89|0">فيرجيل فان دايك (89)</option>
+                        <option value="فينيسيوس جونيور|LW|91|https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=200&q=80">فينيسيوس جونيور (91)</option>
+                        <option value="كيفين دي بروين|CAM|91|https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=200&q=80">كيفين دي بروين (91)</option>
+                        <option value="محمد صلاح|RW|90|https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=200&q=80">محمد صلاح (90)</option>
+                        <option value="هاري كين|ST|91|https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=200&q=80">هاري كين (91)</option>
+                        <option value="فيرجيل فان دايك|CB|89|https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=200&q=80">فيرجيل فان دايك (89)</option>
                     </optgroup>
-                    <optgroup label="🚀 نجوم المستقبل (Wonderkids)">
-                        <option value="جود بيلينجهام|CM|90|0">جود بيلينجهام (90)</option>
-                        <option value="كيليان مبابي|ST|92|0">كيليان مبابي (92)</option>
-                        <option value="لامين يامال|RW|88|0">لامين يامال (88)</option>
-                        <option value="جمال موسيالا|CAM|88|0">جمال موسيالا (88)</option>
-                        <option value="فلوريان فيرتز|CAM|88|0">فلوريان فيرتز (88)</option>
-                    </optgroup>
-                    <optgroup label="🛡️ حراس ودفاع صلب">
-                        <option value="تيبو كورتوا|GK|90|0">تيبو كورتوا (90)</option>
-                        <option value="أليسون بيكر|GK|89|0">أليسون بيكر (89)</option>
-                        <option value="روبن دياز|CB|89|0">روبن دياز (89)</option>
-                        <option value="أشرف حكيمي|RB|84|0">أشرف حكيمي (84)</option>
+                    <optgroup label="🚀 نجوم المستقبل">
+                        <option value="جود بيلينجهام|CM|90|https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=200&q=80">جود بيلينجهام (90)</option>
+                        <option value="كيليان مبابي|ST|92|https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=200&q=80">كيليان مبابي (92)</option>
+                        <option value="لامين يامال|RW|88|https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=200&q=80">لامين يامال (88)</option>
                     </optgroup>
                     <optgroup label="👑 الأساطير">
-                        <option value="بيليه|ST|98|0">بيليه (98)</option>
-                        <option value="دييجو مارادونا|CAM|97|0">دييجو مارادونا (97)</option>
-                        <option value="رونالدو الظاهرة|ST|96|0">رونالدو الظاهرة (96)</option>
-                        <option value="زين الدين زيدان|CAM|95|0">زين الدين زيدان (95)</option>
+                        <option value="بيليه|ST|98|https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=200&q=80">بيليه (98)</option>
+                        <option value="دييجو مارادونا|CAM|97|https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=200&q=80">دييجو مارادونا (97)</option>
+                        <option value="رونالدو الظاهرة|ST|96|https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=200&q=80">رونالدو الظاهرة (96)</option>
                     </optgroup>
                 </select>
-                <button onclick="startAuction()" style="background:#059669;">طرح للمزاد 🚀</button>
+
+                <input type="text" id="custom-img-url" placeholder="رابط صورة مخصص (اختياري)">
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                    <button onclick="startAuction()" style="background:#059669; margin:0;">طرح للمزاد 🚀</button>
+                    <button onclick="finishAuction(true)" style="background:#dc2626; margin:0;">🔨 تم البيع / حسم للأعلى</button>
+                    <button onclick="finishAuctionForOpponent()" style="background:#d97706; margin:0; grid-column: span 2;">⚡ حسم الصفقة للخصم</button>
+                    <button onclick="giveRandomToLoser()" style="background:#7c3aed; margin:0; grid-column: span 2;">🎁 منح الخاسر لاعب عشوائي (تعويض)</button>
+                </div>
             </div>
 
             <!-- الشات المباشر -->
@@ -252,6 +261,11 @@
                     <div class="rating-box" id="player-rating">--</div>
                     <span class="pos-badge" id="player-pos">---</span>
                 </div>
+
+                <div class="player-img-box">
+                    <img id="player-img" src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=200&q=80" alt="صورة اللاعب">
+                </div>
+
                 <div class="player-name" id="player-name">بانتظار بدء المزاد...</div>
                 
                 <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:12px; margin-top:10px;">
@@ -273,7 +287,6 @@
             <div style="margin-top:20px; text-align:right;">
                 <h3 style="margin-bottom:8px;">⚽ ملعب التشكيلة التكتيكية (4-3-3):</h3>
                 
-                <!-- خيار 3: مؤشر قوة التشكيلة والتناغم -->
                 <div class="team-stats-box">
                     <div class="stat-item">⭐ إجمالي قوة الفريق (OVR): <span id="total-ovr" class="stat-value">0</span></div>
                     <div class="stat-item">⚡ التناغم التكتيكي: <span id="team-chem" class="stat-value">0%</span></div>
@@ -282,25 +295,10 @@
                 <div class="visual-pitch">
                     <div class="pitch-line-center"></div>
                     
-                    <!-- خط الهجوم -->
-                    <div class="pitch-row" id="pitch-fw">
-                        <div class="pitch-card-item">FW: فارغ</div>
-                    </div>
-                    
-                    <!-- خط الوسط -->
-                    <div class="pitch-row" id="pitch-mid">
-                        <div class="pitch-card-item">MID: فارغ</div>
-                    </div>
-                    
-                    <!-- خط الدفاع -->
-                    <div class="pitch-row" id="pitch-def">
-                        <div class="pitch-card-item">DEF: فارغ</div>
-                    </div>
-                    
-                    <!-- حراسة المرمى -->
-                    <div class="pitch-row" id="pitch-gk">
-                        <div class="pitch-card-item">GK: فارغ</div>
-                    </div>
+                    <div class="pitch-row" id="pitch-fw"><div class="pitch-card-item">FW: فارغ</div></div>
+                    <div class="pitch-row" id="pitch-mid"><div class="pitch-card-item">MID: فارغ</div></div>
+                    <div class="pitch-row" id="pitch-def"><div class="pitch-card-item">DEF: فارغ</div></div>
+                    <div class="pitch-row" id="pitch-gk"><div class="pitch-card-item">GK: فارغ</div></div>
                 </div>
             </div>
 
@@ -325,12 +323,18 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // الصوتيات
         const soundBid = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         const soundWin = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
 
         let currentRoom = "", playerName = "", myBudget = 200, isAdmin = false;
-        let myTeam = [], timerInterval = null;
+        let myTeam = [], timerInterval = null, currentAuctionData = null;
+
+        const fallbackPlayers = [
+            { name: "أنخيل دي ماريا", pos: "RW", rating: 84, img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=200&q=80" },
+            { name: "تياغو سيلفا", pos: "CB", rating: 83, img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?auto=format&fit=crop&w=200&q=80" },
+            { name: "ماركو فيراتي", pos: "CM", rating: 85, img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=200&q=80" },
+            { name: "مانويل نيوير", pos: "GK", rating: 87, img: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=200&q=80" }
+        ];
 
         function joinRoom(admin) {
             playerName = document.getElementById('username').value.trim();
@@ -350,7 +354,6 @@
 
             if(isAdmin) document.getElementById('admin-panel').classList.remove('hidden');
 
-            // الشات المباشر
             roomRef.child('chat').on('child_added', (snapshot) => {
                 const msg = snapshot.val();
                 const chatDiv = document.getElementById('chat-messages');
@@ -358,29 +361,29 @@
                 chatDiv.scrollTop = chatDiv.scrollHeight;
             });
 
-            // تحديث حالة المزاد
             roomRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if(data) {
                     if(data.auction) {
-                        const a = data.auction;
-                        document.getElementById('player-name').innerText = a.name;
-                        document.getElementById('player-pos').innerText = a.pos;
-                        document.getElementById('player-rating').innerText = a.rating;
-                        document.getElementById('current-bid').innerText = a.currentBid;
-                        document.getElementById('highest-bidder').innerText = a.highestBidder || "لا يوجد";
+                        currentAuctionData = data.auction;
+                        document.getElementById('player-name').innerText = currentAuctionData.name;
+                        document.getElementById('player-pos').innerText = currentAuctionData.pos;
+                        document.getElementById('player-rating').innerText = currentAuctionData.rating;
+                        document.getElementById('player-img').src = currentAuctionData.img || "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=200&q=80";
+                        document.getElementById('current-bid').innerText = currentAuctionData.currentBid;
+                        document.getElementById('highest-bidder').innerText = currentAuctionData.highestBidder || "لا يوجد";
                     }
 
                     if(data.lastSold) {
                         if(data.lastSold.winner === playerName && !myTeam.some(p => p.id === data.lastSold.id)) {
                             myTeam.push(data.lastSold);
-                            myBudget -= data.lastSold.price;
+                            myBudget -= (data.lastSold.price || 0);
                             document.getElementById('budget').innerText = myBudget;
 
                             soundWin.play();
                             confetti({ particleCount: 100, spread: 70 });
                             renderVisualPitch();
-                            calculateTeamStats(); // حساب قوة الفريق والتناغم
+                            calculateTeamStats();
                         }
                     }
                 }
@@ -399,9 +402,16 @@
 
         function startAuction() {
             const raw = document.getElementById('player-select').value.split('|');
+            const customImg = document.getElementById('custom-img-url').value.trim();
+            
             database.ref('rooms/' + currentRoom + '/auction').set({
                 id: Date.now(),
-                name: raw[0], pos: raw[1], rating: parseInt(raw[2]), currentBid: 0, highestBidder: "لا يوجد"
+                name: raw[0], 
+                pos: raw[1], 
+                rating: parseInt(raw[2]), 
+                img: customImg !== "" ? customImg : raw[3],
+                currentBid: 0, 
+                highestBidder: "لا يوجد"
             });
 
             let timeLeft = 20;
@@ -417,6 +427,74 @@
                     document.getElementById('timer-box').classList.add('hidden');
                 }
             }, 1000);
+        }
+
+        // حسم المزاد لصاحب أعالي سومة
+        function finishAuction() {
+            if(!currentAuctionData || currentAuctionData.highestBidder === "لا يوجد") {
+                alert("لا يوجد مزايدين حالياً!");
+                return;
+            }
+
+            database.ref('rooms/' + currentRoom + '/lastSold').set({
+                id: currentAuctionData.id,
+                name: currentAuctionData.name,
+                pos: currentAuctionData.pos,
+                rating: currentAuctionData.rating,
+                price: currentAuctionData.currentBid,
+                winner: currentAuctionData.highestBidder
+            });
+
+            resetAuctionState("تم البيع للمنافس الأفضل");
+        }
+
+        // حسم الصفقة للخصم المباشر
+        function finishAuctionForOpponent() {
+            const opponentName = prompt("أدخل اسم الخصم الذي تريد حسم الصفقة له:");
+            if(!opponentName) return;
+
+            database.ref('rooms/' + currentRoom + '/lastSold').set({
+                id: Date.now(),
+                name: currentAuctionData ? currentAuctionData.name : "لاعب مميز",
+                pos: currentAuctionData ? currentAuctionData.pos : "ST",
+                rating: currentAuctionData ? currentAuctionData.rating : 85,
+                price: currentAuctionData ? currentAuctionData.currentBid : 10,
+                winner: opponentName
+            });
+
+            resetAuctionState(`تم حسم الصفقة لصالح الخصم (${opponentName})`);
+        }
+
+        // منح لاعب عشوائي كمزاد تعويضي لمن خسر
+        function giveRandomToLoser() {
+            const loserName = prompt("أدخل اسم اللاعب الخاسر لتعويضه بلاعب عشوائي:");
+            if(!loserName) return;
+
+            const randomPlayer = fallbackPlayers[Math.floor(Math.random() * fallbackPlayers.length)];
+
+            database.ref('rooms/' + currentRoom + '/lastSold').set({
+                id: Date.now(),
+                name: randomPlayer.name,
+                pos: randomPlayer.pos,
+                rating: randomPlayer.rating,
+                price: 0, // مجاناً كتعويض
+                winner: loserName
+            });
+
+            alert(`تم منح اللاعب ${randomPlayer.name} كتعويض لـ ${loserName}!`);
+        }
+
+        function resetAuctionState(msg) {
+            database.ref('rooms/' + currentRoom + '/auction').update({
+                name: "تم المزاد - بانتظار لاعب جديد",
+                pos: "---",
+                rating: "--",
+                currentBid: 0,
+                highestBidder: msg
+            });
+
+            clearInterval(timerInterval);
+            document.getElementById('timer-box').classList.add('hidden');
         }
 
         function placeBid(inc) {
@@ -435,16 +513,12 @@
             });
         }
 
-        // حساب إجمالي تقييم الفريق والتناغم (خيار 3)
         function calculateTeamStats() {
             if (myTeam.length === 0) return;
-
-            // حساب المتوسط لتقييم اللاعبين
             const totalRating = myTeam.reduce((sum, player) => sum + player.rating, 0);
             const avgRating = Math.round(totalRating / myTeam.length);
             document.getElementById('total-ovr').innerText = avgRating;
 
-            // حساب التناغم بناءً على اكتمال المراكز في خطة 4-3-3
             const positions = new Set(myTeam.map(p => p.pos));
             let chemScore = Math.min(100, Math.round((positions.size / 4) * 100));
             document.getElementById('team-chem').innerText = `${chemScore}%`;
