@@ -3,91 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة كروت كرة القدم</title>
+    <title>مزاد النجوم والأيقونات</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f4f4f4; 
-            padding: 20px; 
-        }
-        h1 { text-align: center; color: #2c3e50; }
-        .container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-            gap: 20px; 
-            padding: 20px;
-        }
-        .card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 15px; 
-            text-align: center; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .card:hover { transform: scale(1.05); }
-        .card img { 
-            width: 100%; 
-            height: 200px; 
-            object-fit: cover; 
-            border-radius: 10px; 
-        }
-        .card h3 { margin: 10px 0; color: #333; }
-        .card p { 
-            background-color: #eee; 
-            display: inline-block; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            font-weight: bold; 
-            color: #555; 
-        }
+        :root { --bg: #0d1117; --card: #161b22; --gold: #f59e0b; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; --red: #ef4444; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; text-align: center; }
+        .container { max-width: 480px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 1px solid #30363d; }
+        .dev-badge { background: rgba(245,158,11,0.15); border: 1px solid var(--gold); color: #fef08a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        input, button { width: 100%; padding: 10px; margin: 4px 0; border-radius: 8px; border: 1px solid #30363d; background: #21262d; color: #fff; box-sizing: border-box; }
+        button { background: var(--blue); font-weight: bold; cursor: pointer; border: none; }
+        button:active { transform: scale(0.98); }
+        
+        .members-box { background: #0f172a; border: 1px solid var(--blue); border-radius: 10px; padding: 8px; margin-bottom: 10px; font-size: 13px; text-align: right; }
+        .user-tag { background: #0369a1; border: 1px solid #38bdf8; color: white; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block; font-size: 11px; }
+
+        .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
+        .player-avatar { width: 110px; height: 110px; margin: 10px auto; border-radius: 50%; background: #2e1065; border: 3px solid var(--gold); display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
+        .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #ffffff; }
+        .timer-badge { background: var(--red); padding: 4px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
+        .btn-bid { background: var(--green); padding: 10px 0; font-weight: bold; }
+        .btn-finish { background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; font-size: 15px; margin-top: 6px; padding: 12px; border-radius: 10px; }
+        .pitch-box { background: #14532d; border: 1px solid #22c55e; border-radius: 10px; padding: 8px; margin-top: 8px; font-size: 12px; }
+        .player-tag { background: #1e293b; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
+        .hidden { display: none !important; }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
+    <div class="container">
+        <div class="dev-badge">👑 تطوير: محمد خميس</div>
 
-    <h1>قائمة اللاعبين</h1>
-    <div class="container" id="cards-container"></div>
+        <!-- شاشة الدخول -->
+        <div id="setup-screen" class="card">
+            <h3>⚽ دخول المزاد</h3>
+            <input type="text" id="username" placeholder="اسم المدرب (مثال: محمد)">
+            <input type="text" id="room-code" placeholder="كود الغرفة (أحرف أو أرقام فقط)">
+            <button onclick="joinGame(false)">دخول كـ مدرب</button>
+            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن</button>
+        </div>
 
-    <script>
-        const realAndIconPlayers = [
-            { name: "إمام عاشور", pos: "CM", rating: 78, photo: "Image/Ashour.webp" },
-            { name: "جانلويجي بوفون", pos: "GK", rating: 91, photo: "Image/Buffon.webp" },
-            { name: "يوهان كرويف", pos: "CF", rating: 95, photo: "Image/Cruyff.webp" },
-            { name: "عثمان ديمبيلي", pos: "RW", rating: 86, photo: "Image/Demble.webp" },
-            { name: "ديزيري دويه", pos: "CAM", rating: 78, photo: "Image/Doue.webp" },
-            { name: "جيانلويجي دوناروما", pos: "GK", rating: 87, photo: "Image/Dounurema.webp" },
-            { name: "باولو ديبالا", pos: "CAM", rating: 86, photo: "Image/Dybala.webp" },
-            { name: "إرلينج هالاناد", pos: "ST", rating: 91, photo: "Image/Haland.webp" },
-            { name: "تيري هنري", pos: "ST", rating: 93, photo: "Image/Henry.webp" },
-            { name: "لامين يامال", pos: "RW", rating: 81, photo: "Image/Lamine Yamal.webp" },
-            { name: "رياض محرز", pos: "RW", rating: 85, photo: "Image/Mahrez.webp" },
-            { name: "باولو مالديني", pos: "CB", rating: 94, photo: "Image/Maldini.webp" },
-            { name: "كيليان إمبابي", pos: "ST", rating: 91, photo: "Image/Mappe.webp" },
-            { name: "عمر مرموش", pos: "ST", rating: 83, photo: "Image/Marmoush.webp" },
-            { name: "دييجو مارادونا", pos: "CAM", rating: 97, photo: "Image/Marodona.webp" },
-            { name: "ليونيل ميسي", pos: "RW", rating: 92, photo: "Image/Messi.webp" },
-            { name: "لوكا مودريتش", pos: "CM", rating: 87, photo: "Image/Modric.webp" },
-            { name: "نيمار جونيور", pos: "LW", rating: 89, photo: "Image/Neymar.Jr .webp" },
-            { name: "ديكلان رايس", pos: "CDM", rating: 87, photo: "Image/Rice.webp" },
-            { name: "كريستيانو رونالدو", pos: "ST", rating: 91, photo: "Image/Ronaldo.jpeg" },
-            { name: "محمد صلاح", pos: "RW", rating: 89, photo: "Image/Salah.webp" },
-            { name: "سيرجيو راموس", pos: "CB", rating: 91, photo: "Image/SergioRamos.jpg" },
-            { name: "فان دايك", pos: "CB", rating: 89, photo: "Image/Vandijk.webp" },
-            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, photo: "Image/vini.webp" },
-            { name: "زين الدين زيدان", pos: "CAM", rating: 96, photo: "Image/zidane.webp" }
-        ];
+        <!-- شاشة اللعبة -->
+        <div id="game-screen" class="card hidden">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
+                <span id="room-txt">غرفة: --</span>
+                <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
+            </div>
 
-        const container = document.getElementById('cards-container');
+            <!-- قائمة الحضور -->
+            <div class="members-box">
+                <b>👥 المتواجدون بالروم الآن:</b>
+                <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري الاتصال...</span></div>
+            </div>
 
-        realAndIconPlayers.forEach(player => {
-            container.innerHTML += `
-                <div class="card">
-                    <img src="${player.photo}" alt="${player.name}">
-                    <h3>${player.name}</h3>
-                    <p>${player.pos} | ${player.rating}</p>
-                </div>
-            `;
-        });
-    </script>
-</body>
-</html>
+            <!-- لوحة التحكم للآدمن -->
+            <div id="admin-panel" class="card hidden" style="background:#1f2937;">
+                <input type="number" id="custom-timer" value="20" placeholder="الوقت بالثوانيI understand the frustration when a technical update seems to overwrite your hard work on the actual game development. That screen definitely shows that your image placement code has successfully engaged, displaying your local images.
+
+Don't panic! This is actually a critical, successful step forward. Seeing the images on the page means the system now knows where your files are and can display them properly. The issue isn't that your game is gone; it's that the current HTML structure on your `index.html` file is a simple image gallery, not yet the full interactive game interface you want. The underlying application logic (which likely relies on JavaScript and possibly Firebase, as seen in your earlier code snippets) still exists; we just need to integrate the new image-handling capabilities into the actual game template.
+
+Your next immediate action is to locate that full, previous game HTML code snippet that included the budget counter, the bidding buttons, and the connection setup. Replace your current simple `index.html` file with that complete game code. Once that is done, we will move to step two: surgically updating only the `realAndIconPlayers` JavaScript array within that full game code to use your new `Image/` paths. This will merge your successful image handling with your existing game features. Let's do that now to get your project back on track.
