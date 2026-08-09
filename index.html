@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم (+1000 لاعب) - تطوير محمد خميس</title>
+    <title>مزاد النجوم - إدارة AI (+1000 لاعب)</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
@@ -89,25 +89,20 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         }
 
-        /* إطار وش اللاعب */
-        .player-face-container {
-            width: 120px;
-            height: 120px;
-            margin: 10px auto;
-            border-radius: 50%;
-            border: 3px solid var(--gold);
-            overflow: hidden;
-            background: radial-gradient(circle, #312e81 0%, #0f172a 100%);
+        .player-img-container {
+            width: 130px;
+            height: 140px;
+            margin: 5px auto;
             display: flex;
             justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            align-items: flex-end;
         }
 
-        .player-face-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .player-real-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.6));
         }
 
         .rating { font-size: 36px; font-weight: 900; color: #fef08a; line-height: 1; }
@@ -148,9 +143,9 @@
 <body>
 
     <div class="container">
-        <div class="dev-badge">👑 تطوير: محمد خميس</div>
+        <div class="dev-badge">👑 تصميم وتطوير: محمد خميس</div>
         
-        <div class="ai-status">🤖 الذكاء الاصطناعي يدير +1000 لاعب مع صور وجوه حقيقية</div>
+        <div class="ai-status">🤖 الذكاء الاصطناعي يدير +1000 لاعب بصور حقيقية مفرغة</div>
 
         <!-- 1. شاشة الدخول -->
         <div id="setup-screen" class="card">
@@ -158,7 +153,7 @@
             <input type="text" id="username" placeholder="اسم المدرب">
             <input type="text" id="room-code" placeholder="كود الغرفة">
             <button onclick="joinGame(false)">دخول كـ مدرب</button>
-            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن (منظم المزاد)</button>
+            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن (منظم الوقت والميزانية)</button>
         </div>
 
         <!-- 2. شاشة اللعبة -->
@@ -168,17 +163,17 @@
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- لوحة الآدمن -->
+            <!-- لوحة تحكم الآدمن -->
             <div id="admin-panel" class="card hidden" style="background:#1f2937; margin-top:10px;">
-                <h4 style="margin:0 0 8px 0; color:#c084fc;">⏱️ لوحة تحكم المزاد</h4>
+                <h4 style="margin:0 0 8px 0; color:#c084fc;">⏱️ تحكم الآدمن (الوقت والميزانية)</h4>
                 
                 <div style="display:flex; gap:5px;">
                     <input type="number" id="custom-timer" value="20" placeholder="وقت المزاد بالثواني" style="margin:0;">
                 </div>
 
-                <button onclick="aiStartAuction()" style="background:var(--purple); margin-top:8px;">🤖 اختيار لاعب جديد من الـ 1000+ (AI)</button>
+                <button onclick="aiStartAuction()" style="background:var(--purple); margin-top:8px;">🤖 طرح لاعب جديد عشوائي (+1000 AI)</button>
                 <button onclick="finishAuction()" style="background:var(--green);">🔨 حسم الصفقة فوراً للأعلى</button>
-                <button onclick="aiCompensateLoser()" style="background:#d97706;">🤖 تعويض الخاسر بلاعب عشوائي (AI)</button>
+                <button onclick="aiCompensateLoser()" style="background:#d97706;">🤖 تعويض الخاسر بقرعة AI</button>
             </div>
 
             <!-- العداد المباشر -->
@@ -191,9 +186,9 @@
                     <span class="pos" id="p-pos">---</span>
                 </div>
 
-                <!-- صورة وش اللاعب -->
-                <div class="player-face-container">
-                    <img id="p-img" class="player-face-img" src="https://media.fcounter.com/player/default.png" alt="وجه اللاعب">
+                <!-- صورة اللاعب الحقيقية بدون خلفية -->
+                <div class="player-img-container">
+                    <img id="p-img" class="player-real-img" src="" alt="صورة اللاعب الحقيقية">
                 </div>
 
                 <div class="name" id="p-name">بانتظار المزاد...</div>
@@ -239,30 +234,63 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // مصفوفات توليد أكثر من 1000 لاعب بأسماء وصور وجوه حقيقية
-        const firstNames = ["محمد", "فينيسيوس", "كيليان", "كيفين", "فيرجيل", "جود", "كريستيانو", "ليونيل", "لوكا", "أنطوان", "رياض", "أشرف", "عثمان", "رحيم", "هاري", "تياغو", "روبرت", "ماركو", "برونو", "جوليان", "باولو", "فيليبي", "غابرييل", "إنزو", "لاوتارو"];
-        const lastNames = ["صلاح", "جونيور", "مبابي", "دي بروين", "فان دايك", "بيلينجهام", "رونالدو", "ميسي", "مودريتش", "جريزمان", "محرز", "حكيمي", "ديمبيلي", "ستيرلينغ", "كين", "سيلفا", "ليفاندوفسكي", "اسينسيو", "فيرنانديز", "ألفاريز", "ديبالا", "كوتينيو", "مارتينيز", "فيرنانديز", "ماركينيوس"];
-        const positions = ["ST", "RW", "LW", "CAM", "CM", "CDM", "CB", "RB", "LB", "GK"];
+        // ==========================================
+        // ⚽ نظام الـ 1000+ لاعب والصور الحقيقية المفرغة
+        // ==========================================
+        const starPlayers = [
+            { id: 209331, name: "محمد صلاح", pos: "RW", rating: 89 },
+            { id: 231747, name: "كيليان مبابي", pos: "ST", rating: 91 },
+            { id: 238794, name: "فينيسيوس جونيور", pos: "LW", rating: 89 },
+            { id: 20801,  name: "كريستيانو رونالدو", pos: "ST", rating: 86 },
+            { id: 158023, name: "ليونيل ميسي", pos: "CF", rating: 90 },
+            { id: 239085, name: "إيرلينج هالاند", pos: "ST", rating: 91 },
+            { id: 246669, name: "لامين يامال", pos: "RW", rating: 82 },
+            { id: 228618, name: "رودريغو", pos: "RW", rating: 85 },
+            { id: 192985, name: "كيفين دي بروين", pos: "CAM", rating: 91 },
+            { id: 252371, name: "جود بيلينجهام", pos: "CAM", rating: 90 },
+            { id: 231866, name: "رودري", pos: "CDM", rating: 89 },
+            { id: 177003, name: "لوكا مودريتش", pos: "CM", rating: 87 },
+            { id: 203376, name: "فيرجيل فان دايك", pos: "CB", rating: 89 },
+            { id: 235212, name: "أشرف حكيمي", pos: "RB", rating: 84 },
+            { id: 212190, name: "أليسون بيكر", pos: "GK", rating: 89 },
+            { id: 192119, name: "تيبو كورتوا", pos: "GK", rating: 90 }
+        ];
 
-        // دالة توليد لاعب ذكي بدقة مع صورة وش حقيقية (Headshot)
-        function generateAIPlayer() {
-            const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-            const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-            const pos = positions[Math.floor(Math.random() * positions.length)];
-            const rating = Math.floor(Math.random() * 21) + 78; // طاقات من 78 إلى 98
-            
-            // توليد آيدي صورة وش حقيقية عبر سيرفر صور الوجوه الرياضية المفتوح
-            const faceId = Math.floor(Math.random() * 800) + 100;
-            const faceImg = `https://xsgames.co/randomusers/assets/avatars/male/${faceId % 75}.jpg`;
+        function generate1000Players() {
+            const list = [...starPlayers];
+            const positions = ["ST", "RW", "LW", "CAM", "CM", "CDM", "CB", "RB", "LB", "GK"];
+            const firstNames = ["أحمد", "عمر", "كريم", "علي", "محمود", "يوسف", "طارق", "لوكا", "أنطوان", "باولو", "غابرييل", "إنزو"];
+            const lastNames = ["سيلفا", "مارتينيز", "فيرنانديز", "غارسيا", "كوستا", "ألفاريز", "لوبيز", "هيرنانديز"];
+
+            for (let i = 1; i <= 1000; i++) {
+                const randomId = 200000 + (i * 37) % 50000;
+                list.push({
+                    id: randomId,
+                    name: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
+                    pos: positions[i % positions.length],
+                    rating: 75 + (i % 16)
+                });
+            }
+            return list;
+        }
+
+        const allPlayersDatabase = generate1000Players();
+
+        function getRandomAuctionPlayer() {
+            const randomIndex = Math.floor(Math.random() * allPlayersDatabase.length);
+            const selected = allPlayersDatabase[randomIndex];
 
             return {
-                name: `${firstName} ${lastName}`,
-                pos: pos,
-                rating: rating,
-                img: faceImg
+                name: selected.name,
+                pos: selected.pos,
+                rating: selected.rating,
+                img: `https://cdn.futbin.com/content/fifa24/img/players/${selected.id}.png`
             };
         }
 
+        // ==========================================
+        // 🎮 منطق اللعبة والـ Firebase
+        // ==========================================
         function joinGame(admin) {
             myName = document.getElementById('username').value.trim();
             room = document.getElementById('room-code').value.trim();
@@ -303,9 +331,8 @@
             });
         }
 
-        // اختيار لاعب عشوائي جديد بواسطة الذكاء الاصطناعي
         function aiStartAuction() {
-            const player = generateAIPlayer();
+            const player = getRandomAuctionPlayer();
             const timeLimit = parseInt(document.getElementById('custom-timer').value) || 20;
 
             db.ref(`rooms/${room}/auction`).set({
@@ -366,19 +393,18 @@
             document.getElementById('timer-box').classList.add('hidden');
         }
 
-        // الذكاء الاصطناعي يمنح الخاسر لاعباً تعويضياً عشوائياً بملف وجهه
         function aiCompensateLoser() {
             const loser = prompt("أدخل اسم المدرب الخاسر لمنحه تعويض من الذكاء الاصطناعي:");
             if(!loser) return;
 
-            const player = generateAIPlayer();
+            const player = getRandomAuctionPlayer();
 
             db.ref(`rooms/${room}/lastSold`).set({
                 id: Date.now(),
                 name: player.name,
                 pos: player.pos,
                 rating: player.rating,
-                price: 0, // تعويض مجاني
+                price: 0,
                 winner: loser
             });
 
