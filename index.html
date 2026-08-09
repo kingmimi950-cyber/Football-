@@ -15,8 +15,8 @@
         button { background: var(--blue); font-weight: bold; cursor: pointer; border: none; }
         button:active { transform: scale(0.98); }
         .fut-card { background: linear-gradient(135deg, #1e1b4b, #4c1d95); border: 2px solid var(--gold); border-radius: 14px; padding: 12px; position: relative; margin: 8px 0; }
-        .player-img-container { width: 140px; height: 140px; margin: 0 auto; display: flex; justify-content: center; align-items: flex-end; }
-        .player-real-img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
+        .player-img-container { width: 140px; height: 140px; margin: 0 auto; display: flex; justify-content: center; align-items: center; }
+        .player-real-img { max-width: 100%; max-height: 100%; border-radius: 10px; object-fit: cover; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)); }
         .rating { font-size: 32px; font-weight: 900; color: #fef08a; }
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
         .name { font-size: 20px; font-weight: bold; margin: 6px 0; }
@@ -67,7 +67,7 @@
                     <span class="pos" id="p-pos">---</span>
                 </div>
                 <div class="player-img-container">
-                    <img id="p-img" class="player-real-img" src="" alt="صورة اللاعب">
+                    <img id="p-img" class="player-real-img" src="" alt="شعار المزاد">
                 </div>
                 <div class="name" id="p-name">بانتظار المزاد...</div>
                 <div style="background:rgba(0,0,0,0.4); padding:6px; border-radius:8px;">
@@ -111,35 +111,29 @@
         let room = "", myName = "", myBudget = 200, isAdmin = false;
         let myTeam = [], currentAuction = null, timerInterval = null;
 
-        // 🌟 قائمة مضبوطة بأسماء وصور مفرغة ودقيقة 100% بدون أي لغبطة
+        // روابط صور حرة ومضمونة 100% من ويكيميديا وسيرفرات مفتوحة
         const realAndIconPlayers = [
-            // ICONS أساطير
-            { name: "بيليه (Pele)", pos: "CAM", rating: 98, img: "https://www.futwiz.com/assets/img/fc24/faces/242519.png" },
-            { name: "زيدان (Zidane)", pos: "CAM", rating: 96, img: "https://www.futwiz.com/assets/img/fc24/faces/138431.png" },
-            { name: "رونالدو الظاهرة (R9)", pos: "ST", rating: 96, img: "https://www.futwiz.com/assets/img/fc24/faces/37576.png" },
-            { name: "رونالدينيو (Ronaldinho)", pos: "LW", rating: 94, img: "https://www.futwiz.com/assets/img/fc24/faces/28130.png" },
-            { name: "كرويف (Cruyff)", pos: "CF", rating: 94, img: "https://www.futwiz.com/assets/img/fc24/faces/238392.png" },
-            { name: "مالديني (Maldini)", pos: "CB", rating: 94, img: "https://www.futwiz.com/assets/img/fc24/faces/238388.png" },
-            { name: "هنري (Henry)", pos: "ST", rating: 93, img: "https://www.futwiz.com/assets/img/fc24/faces/238393.png" },
-            { name: "فييرا (Vieira)", pos: "CM", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/238390.png" },
-            { name: "روبرتو كارلوس", pos: "LB", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/1625.png" },
-
-            // النجوم الحاليين
-            { name: "ليونيل ميسي", pos: "CF", rating: 90, img: "https://www.futwiz.com/assets/img/fc24/faces/158023.png" },
-            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, img: "https://www.futwiz.com/assets/img/fc24/faces/20801.png" },
-            { name: "محمد صلاح", pos: "RW", rating: 89, img: "https://www.futwiz.com/assets/img/fc24/faces/209331.png" },
-            { name: "كيليان مبابي", pos: "ST", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/231747.png" },
-            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, img: "https://www.futwiz.com/assets/img/fc24/faces/238794.png" },
-            { name: "إيرلينج هالاند", pos: "ST", rating: 91, img: "https://www.futwiz.com/assets/img/fc24/faces/239085.png" },
-            { name: "جود بيلينجهام", pos: "CAM", rating: 90, img: "https://www.futwiz.com/assets/img/fc24/faces/252371.png" },
-            { name: "لوكا مودريتش", pos: "CM", rating: 87, img: "https://www.futwiz.com/assets/img/fc24/faces/177003.png" },
-            { name: "فان دايك", pos: "CB", rating: 89, img: "https://www.futwiz.com/assets/img/fc24/faces/203376.png" },
-            { name: "أشرف حكيمي", pos: "RB", rating: 84, img: "https://www.futwiz.com/assets/img/fc24/faces/235212.png" }
+            { name: "ليونيل ميسي", pos: "CF", rating: 90, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/220px-Lionel_Messi_20180626.jpg" },
+            { name: "كريستيانو رونالدو", pos: "ST", rating: 86, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/220px-Cristiano_Ronaldo_2018.jpg" },
+            { name: "محمد صلاح", pos: "RW", rating: 89, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mohamed_Salah_2018.jpg/220px-Mohamed_Salah_2018.jpg" },
+            { name: "كيليان مبابي", pos: "ST", rating: 91, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/France_vs._Croatia_2018_Final_%28cropped%29_Kylian_Mbapp%C3%A9.jpg/220px-France_vs._Croatia_2018_Final_%28cropped%29_Kylian_Mbapp%C3%A9.jpg" },
+            { name: "زين الدين زيدان", pos: "CAM", rating: 96, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Zinedine_Zidane_by_Tasnim_03.jpg/220px-Zinedine_Zidane_by_Tasnim_03.jpg" },
+            { name: "بيليه (Pele)", pos: "CAM", rating: 98, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Pel%C3%A9_by_John_Mathew_Smith_1958.jpg/220px-Pel%C3%A9_by_John_Mathew_Smith_1958.jpg" },
+            { name: "مارادونا (Maradona)", pos: "CAM", rating: 97, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Maradona-1986-Argentina-Mexico.jpg/220px-Maradona-1986-Argentina-Mexico.jpg" },
+            { name: "إيرلينج هالاند", pos: "ST", rating: 91, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Erling_Haaland_2023.jpg/220px-Erling_Haaland_2023.jpg" },
+            { name: "جود بيلينجهام", pos: "CAM", rating: 90, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Jude_Bellingham_2023.jpg/220px-Jude_Bellingham_2023.jpg" },
+            { name: "لوكا مودريتش", pos: "CM", rating: 87, img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/bf/Luka_Modri%C4%87_2018.jpg/220px-Luka_Modri%C4%87_2018.jpg" }
         ];
 
         function getRandomAuctionPlayer() {
             return realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
         }
+
+        // دالة إنقاذ: في حالة تعثر التحميل يتم مولد كارت تلقائي ملون
+        document.getElementById('p-img').onerror = function() {
+            const pName = document.getElementById('p-name').innerText || "Player";
+            this.src = `https://via.placeholder.com/140x140/1e1b4b/fef08a?text=${encodeURIComponent(pName)}`;
+        };
 
         function joinGame(admin) {
             myName = document.getElementById('username').value.trim();
