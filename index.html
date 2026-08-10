@@ -112,7 +112,6 @@
         .btn-join:hover { background-color: var(--accent-hover); }
         .btn-leave { background-color: var(--danger); color: white; margin-top: 15px; }
 
-        /* الشاشات */
         .hidden { display: none !important; }
 
         .room-code-badge {
@@ -137,13 +136,25 @@
             color: var(--gold);
         }
 
-        /* كارت اللاعب والمعلومات */
+        /* تصميم كارت اللاعب والصورة */
         .player-card {
             background: var(--bg-color);
             border: 2px solid var(--accent);
             border-radius: 16px;
             padding: 15px;
             margin: 15px 0;
+            position: relative;
+        }
+
+        .player-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--gold);
+            margin: 10px auto;
+            background-color: var(--card-bg);
+            display: block;
         }
 
         .timer {
@@ -215,6 +226,10 @@
 
             <div class="player-card">
                 <div id="timer-badge" class="timer">⏳ 15</div>
+                
+                <!-- صورة اللاعب -->
+                <img id="player-img" class="player-img" src="" alt="Player Image" onerror="this.src='https://via.placeholder.com/120?text=Player';">
+                
                 <h3 id="player-name" style="color: var(--text);">جاري التحميل...</h3>
                 <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">القوة الإجمالية: <span id="player-ovr">--</span></p>
                 
@@ -255,15 +270,35 @@
         let currentBidPrice = 0;
         let currentHighestBidder = "";
 
-        // قائمة اللاعبين المطروحة للمزاد
+        // قائمة اللاعبين مع روابط الصور المباشرة
         const auctionPlayers = [
-            { name: "ليونيل ميسي", ovr: 93, basePrice: 100 },
-            { name: "كريستيانو رونالدو", ovr: 91, basePrice: 90 },
-            { name: "كيليان إمبابي", ovr: 92, basePrice: 110 },
-            { name: "فينيسيوس جونيور", ovr: 89, basePrice: 80 }
+            { 
+                name: "ليونيل ميسي", 
+                ovr: 93, 
+                basePrice: 100, 
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/440px-Lionel_Messi_20180626.jpg" 
+            },
+            { 
+                name: "كريستيانو رونالدو", 
+                ovr: 91, 
+                basePrice: 90, 
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/440px-Cristiano_Ronaldo_2018.jpg" 
+            },
+            { 
+                name: "كيليان إمبابي", 
+                ovr: 92, 
+                basePrice: 110, 
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kylian_Mbapp%C3%A9_2018.jpg/440px-Kylian_Mbapp%C3%A9_2018.jpg" 
+            },
+            { 
+                name: "فينيسيوس جونيور", 
+                ovr: 89, 
+                basePrice: 80, 
+                image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Vinicius_Jr_2021.jpg/440px-Vinicius_Jr_2021.jpg" 
+            }
         ];
 
-        // 🎲 توليد رمز غرفة عشوائي من 4 خانات
+        // 🎲 توليد رمز غرفة عشوائي
         function generateRoomCode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
@@ -382,13 +417,14 @@
                 playerIndex: playerIndex,
                 playerName: p.name,
                 ovr: p.ovr,
+                image: p.image,
                 currentBid: p.basePrice,
                 highestBidder: "لا يوجد",
                 endTime: Date.now() + 15000
             });
         }
 
-        // 📡 الاستماع لتطورات المزاد والمزايدة اللحظية
+        // 📡 الاستماع لتطورات المزاد
         function listenToAuctionUpdates(code) {
             db.ref(`bidding_rooms/${code}/current_auction`).on('value', snapshot => {
                 if (!snapshot.exists()) return;
@@ -399,6 +435,7 @@
 
                 document.getElementById('player-name').innerText = data.playerName;
                 document.getElementById('player-ovr').innerText = data.ovr;
+                document.getElementById('player-img').src = data.image || "https://via.placeholder.com/120?text=Player";
                 document.getElementById('current-bid-price').innerText = data.currentBid + "M";
                 document.getElementById('highest-bidder-txt').innerText = "أعلى عرض من: " + data.highestBidder;
 
@@ -417,7 +454,7 @@
             });
         }
 
-        // ⏱️ العداد التنازلي
+        // ⏱️ العداد التنازلي الموحد
         function runUnifiedTimer(endTime, code, playerIndex) {
             clearInterval(timerInterval);
 
@@ -438,7 +475,7 @@
             }, 200);
         }
 
-        // 💸 دالة إضافة مزايدة
+        // 💸 دالة المزايدة
         function placeBid(amount) {
             if (currentHighestBidder === currentUser) {
                 return alert("أنت صاحب أعلى عرض حالياً!");
@@ -449,7 +486,7 @@
             db.ref(`bidding_rooms/${currentRoomCode}/current_auction`).update({
                 currentBid: newBid,
                 highestBidder: currentUser,
-                endTime: Date.now() + 10000 // تمديد الوقت 10 ثوانٍ مع كل مزايدة
+                endTime: Date.now() + 10000
             });
         }
 
