@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <button onclick="saveAdminSettings()" style="background:var(--blue); font-size:12px; padding:6px; margin-bottom:8px;">تطبيق الإعدادات</button>
-                <button onclick="startNextAuction()" style="background:var(--gold); color:#000;">🎯 سحب لاعب جديد للمزاد</button>
+                <button onclick="startNextAuction()" style="background:var(--gold); color:#000;">🎯 ابدأ المسابقة / سحب لاعب جديد</button>
             </div>
 
             <!-- منطقة المزاد -->
@@ -282,6 +282,47 @@
                     clearInterval(timerInterval);
                 }
             });
+
+            // قراءة النتيجة الحالية لتجنب التكرار والتداخل عند الدخول
+            db.ref(`rooms/${currentRoom}/auctionResult`).once('value', snapshot => {
+                const res = snapshot.val();
+                if (res) lastHandledAuctionId = res.auctionId;
+
+                // الاستماع لنتائج المزادات القادمة دون تداخل
+                db.ref(`rooms/${currentRoom}/auctionResult`).on('value', snapshotRes => {
+                    const resData = snapshotRes.val();
+                    if (!resData || resData.auctionId === lastHandledAuctionId) return;
+
+                    lastHandledAuctionId = resData.auctionId;
+
+                    if (resData.winner === currentUser) {
+                        myBudget -= resData.price;
+                        addPlayerToTeam(resData.mainPlayer);
+                        sendChat(`🎉 فزت بـ ${resData.mainPlayer.name} مقابل ${resData.price}M$`);
+                    } 
+                    else if (resData.winner && resData.winner !== currentUser) {
+                        db.ref(`rooms/${currentRoom}/usedPlayers`).once('value', snapshotUsed => {
+                            const used = snapshotUsed.val() || [];
+                            const available = realAndIconPlayers.filter(p => !used.includes(p.id));
+
+                            if (available.length > 0) {
+                                const compensationPlayer = available[Math.floor(Math.random() * available.length)];
+                                
+                                db.ref(`rooms/${currentRoom}/usedPlayers`).transaction(currentUsed => {
+                                    currentUsed = currentUsed || [];
+                                    if (!currentUsed.includes(compensationPlayer.id)) {
+                                        currentUsed.push(compensationPlayer.id);
+                                    }
+                                    return currentUsed;
+                                });
+
+                                addPlayerToTeam(compensationPlayer);
+                                sendChat(`🎁 تعويض النظام: حصلت على ${compensationPlayer.name} مجاناً!`);
+                            }
+                        });
+                    }
+                });
+            });
         }
 
         function saveAdminSettings() {
@@ -309,7 +350,13 @@
                 const randomPlayer = available[Math.floor(Math.random() * available.length)];
                 const endTime = Date.now() + (auctionTime * 1000);
 
-                db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, randomPlayer.id]);
+                db.ref(`rooms/${currentRoom}/usedPlayers`).transaction(currentUsed => {
+                    currentUsed = currentUsed || [];
+                    if (!currentUsed.includes(randomPlayer.id)) {
+                        currentUsed.push(randomPlayer.id);
+                    }
+                    return currentUsed;
+                });
 
                 db.ref(`rooms/${currentRoom}/auction`).set({
                     id: Date.now(),
@@ -391,55 +438,37 @@
                     price: price,
                     timestamp: Date.now()
                 });
+            } else {
+                db.ref(`rooms/${currentRoom}/auctionResult`).set({
+                    auctionId: currentAuctionData.id || Date.now(),
+                    winner: null,
+                    mainPlayer: mainPlayer,
+                    price: 0,
+                    timestamp: Date.now()
+                });
+            }
+
+            // تشغيل اللاعب الجديد تلقائياً بعد انتهاء المزاد بـ 3 ثواني (عبر الآدمن)
+            if (isAdmin) {
+                setTimeout(() => {
+                    startNextAuction();
+                }, 3000);
             }
         }
 
-        // معالجة النتيجة بدقة وبدون تعارض
-        db.ref(`rooms/${currentRoom}/auctionResult`).on('value', snapshot => {
-            const res = snapshot.val();
-            if (!res || res.auctionId === lastHandledAuctionId) return;
-
-            lastHandledAuctionId = res.auctionId;
-
-            // الفائز بالمزاد يأخذ اللاعب الأساسي مباشرة وتتخصم منه الميزانية
-            if (res.winner === currentUser) {
-                myBudget -= res.price;
-                addPlayerToTeam(res.mainPlayer);
-                sendChat(`🎉 فزت بـ ${res.mainPlayer.name} مقابل ${res.price}M$`);
-            } 
-            // بقية اللاعبين الخاسرين يحصلون على لاعب تعويضي مجاني فوراً
-            else if (res.winner && res.winner !== currentUser) {
-                db.ref(`rooms/${currentRoom}/usedPlayers`).once('value', snapshotUsed => {
-                    const used = snapshotUsed.val() || [];
-                    const available = realAndIconPlayers.filter(p => !used.includes(p.id));
-
-                    if (available.length > 0) {
-                        const compensationPlayer = available[Math.floor(Math.random() * available.length)];
-                        addPlayerToTeam(compensationPlayer);
-                        db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, compensationPlayer.id]);
-                        sendChat(`🎁 تعويض النظام: حصلت على ${compensationPlayer.name} مجاناً!`);
-                    }
-                });
-            }
-        });
-
         function addPlayerToTeam(player) {
-            // منع تكرار نفس اللاعب
             if (myTeam.some(p => p.id === player.id)) return;
 
             myTeam.push(player);
             const avgRating = Math.round(myTeam.reduce((acc, p) => acc + p.rating, 0) / myTeam.length);
 
-            // تحديث واجهة المستخدم فوراً
             document.getElementById('budget').innerText = myBudget;
             document.getElementById('team-count').innerText = myTeam.length;
             document.getElementById('team-rating').innerText = avgRating;
 
-            // طباعة قائمة اللاعبين في التشكيلة بشكل مباشر
             const teamDiv = document.getElementById('my-team');
             teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join(' ');
 
-            // رفع البيانات المحدثة لقاعدة البيانات
             db.ref(`rooms/${currentRoom}/users/${currentUser}`).update({
                 budget: myBudget,
                 rating: avgRating,
