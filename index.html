@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم والأيقونات</title>
+    <title>مزاد النجوم والأيقونات - أوتوماتيك</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --gold: #f59e0b; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; --red: #ef4444; }
@@ -25,11 +25,16 @@
         .pos { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
         .name { font-size: 22px; font-weight: bold; margin: 8px 0; color: #ffffff; }
         .timer-badge { background: var(--red); padding: 4px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        
         .bid-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px; }
         .btn-bid { background: var(--green); padding: 10px 0; font-weight: bold; }
-        .btn-finish { background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; font-size: 15px; margin-top: 6px; padding: 12px; border-radius: 10px; }
+        .btn-bid:disabled { background: #4b5563; cursor: not-allowed; }
+        
         .pitch-box { background: #14532d; border: 1px solid #22c55e; border-radius: 10px; padding: 8px; margin-top: 8px; font-size: 12px; }
         .player-tag { background: #1e293b; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 6px; margin: 2px; display: inline-block; }
+        .chat-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+        .chat-btn { background: #374151; padding: 6px; font-size: 11px; border-radius: 6px; }
+        .chat-msg { background: #1e293b; padding: 4px 8px; border-radius: 6px; font-size: 12px; margin: 2px; border-right: 3px solid var(--gold); text-align: right; }
         .hidden { display: none !important; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -41,11 +46,11 @@
 
         <!-- شاشة الدخول -->
         <div id="setup-screen" class="card">
-            <h3>⚽ دخول المزاد</h3>
-            <input type="text" id="username" placeholder="اسم المدرب (مثال: محمد)">
-            <input type="text" id="room-code" placeholder="كود الغرفة (أحرف أو أرقام فقط)">
-            <button onclick="joinGame(false)">دخول كـ مدرب</button>
-            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن</button>
+            <h3>⚽ دخول المزاد الأوتوماتيكي</h3>
+            <input type="text" id="username" placeholder="اسم اللاعب (مثال: محمد)">
+            <input type="text" id="room-code" placeholder="كود الغرفة">
+            <button onclick="joinGame(false)">دخول كـ لاعب</button>
+            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن (للتحكم المباشر)</button>
         </div>
 
         <!-- شاشة اللعبة -->
@@ -55,16 +60,15 @@
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- قائمة الحضور -->
+            <!-- قائمة المتواجدين -->
             <div class="members-box">
-                <b>👥 المتواجدون بالروم الآن:</b>
+                <b>👥 المتواجدون بالروم:</b>
                 <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري الاتصال...</span></div>
             </div>
 
-            <!-- لوحة التحكم للآدمن -->
+            <!-- لوحة التحكم الاختيارية للآدمن -->
             <div id="admin-panel" class="card hidden" style="background:#1f2937;">
-                <input type="number" id="custom-timer" value="20" placeholder="الوقت بالثواني">
-                <button onclick="startNextAuction()" style="background:var(--gold); color:#000;"> سحب لاعب جديد</button>
+                <button onclick="triggerAutoAuction()" style="background:var(--gold); color:#000;">🤖 بدء/تخطي الجولة أوتوماتيكياً</button>
             </div>
 
             <!-- كارت المزاد -->
@@ -85,23 +89,44 @@
                 </div>
 
                 <div class="bid-grid">
-                    <button class="btn-bid" onclick="placeBid(1)">+1M</button>
-                    <button class="btn-bid" onclick="placeBid(5)">+5M</button>
-                    <button class="btn-bid" onclick="placeBid(10)">+10M</button>
-                    <button class="btn-bid" onclick="placeBid(20)">+20M</button>
+                    <button class="btn-bid" id="btn-1" onclick="placeBid(1)">+1M</button>
+                    <button class="btn-bid" id="btn-5" onclick="placeBid(5)">+5M</button>
+                    <button class="btn-bid" id="btn-10" onclick="placeBid(10)">+10M</button>
+                    <button class="btn-bid" id="btn-20" onclick="placeBid(20)">+20M</button>
                 </div>
+            </div>
+
+            <!-- تفاعل الشات السريع -->
+            <div class="card" style="padding:6px;">
+                <small>💬 تفاعل سريع:</small>
+                <div class="chat-btn-grid">
+                    <button class="chat-btn" onclick="sendChat('🔥 مزايدة قوية!')">🔥 قوية</button>
+                    <button class="chat-btn" onclick="sendChat('😱 الفلوس خلصت!')">😱 فلسنا</button>
+                    <button class="chat-btn" onclick="sendChat('👏 مبروك اللاعب!')">👏 مبروك</button>
+                </div>
+                <div id="chat-box" style="margin-top:6px; max-height:60px; overflow-y:auto;"></div>
             </div>
 
             <!-- التشكيلة -->
             <div class="pitch-box">
-                <b>تشكيلتي الخاصة (<span id="team-count">0</span>):</b>
-                <div id="my-team" style="margin-top:4px;">لا يوجد لاعبين بعد</div>
+                <div style="display:flex; justify-content:space-between;">
+                    <b>تشكيلة اللاعب (<span id="team-count">0</span>):</b>
+                    <span style="color:var(--gold);">⭐ التقييم: <span id="team-rating">0</span></span>
+                </div>
+                <div id="my-team" style="margin-top:6px; text-align:right;">لا يوجد لاعبين بعد</div>
             </div>
 
-            <button class="btn-finish" onclick="finishMyAuction()">إنهاء المزاد وعرض التشكيلة 🏆</button>
+            <button onclick="showLeaderboard()" style="background:linear-gradient(135deg, #059669, #10b981); margin-top:10px;">🏆 عرض الترتيب المباشر</button>
         </div>
-    </div>    <script>
-        // إعدادات Firebase الخاصة بك
+
+        <!-- شاشة الترتيب -->
+        <div id="leaderboard-screen" class="card hidden">
+            <h3>🏆 الترتيب النهائي للغرفة</h3>
+            <div id="leaderboard-list"></div>
+            <button onclick="closeLeaderboard()" style="background:var(--red); margin-top:10px;">إغلاق</button>
+        </div>
+    </div>
+    <script>
         const firebaseConfig = {
             databaseURL: "https://realtime-fae37-default-rtdb.firebaseio.com"
         };
@@ -111,34 +136,34 @@
         }
         const db = firebase.database();
 
-        // مصفوفة اللاعبين بمسار المجلد الجديد Image/
+        // مصفوفة اللاعبين الكاملة
         const realAndIconPlayers = [
-            { name: "إمام عاشور", pos: "CM", rating: 78, photo: "Image/Ashour.webp" },
-            { name: "جانلويجي بوفون", pos: "GK", rating: 91, photo: "Image/Buffon.webp" },
-            { name: "يوهان كرويف", pos: "CF", rating: 95, photo: "Image/Cruyff.webp" },
-            { name: "عثمان ديمبيلي", pos: "RW", rating: 86, photo: "Image/Demble.webp" },
-            { name: "ديزيري دويه", pos: "CAM", rating: 78, photo: "Image/Doue.webp" },
-            { name: "جيانلويجي دوناروما", pos: "GK", rating: 87, photo: "Image/Dounurema.webp" },
-            { name: "باولو ديبالا", pos: "CAM", rating: 86, photo: "Image/Dybala.webp" },
-            { name: "إرلينج هالاند", pos: "ST", rating: 91, photo: "Image/Haland.webp" },
-            { name: "تيري هنري", pos: "ST", rating: 93, photo: "Image/Henry.webp" },
-            { name: "لامين يامال", pos: "RW", rating: 81, photo: "Image/Lamine Yamal.webp" },
-            { name: "رياض محرز", pos: "RW", rating: 85, photo: "Image/Mahrez.webp" },
-            { name: "باولو مالديني", pos: "CB", rating: 94, photo: "Image/Maldini.webp" },
-            { name: "كيليان إمبابي", pos: "ST", rating: 91, photo: "Image/Mappe.webp" },
-            { name: "عمر مرموش", pos: "ST", rating: 83, photo: "Image/Marmoush.webp" },
-            { name: "دييجو مارادونا", pos: "CAM", rating: 97, photo: "Image/Marodona.webp" },
-            { name: "ليونيل ميسي", pos: "RW", rating: 92, photo: "Image/Messi.webp" },
-            { name: "لوكا مودريتش", pos: "CM", rating: 87, photo: "Image/Modric.webp" },
-            { name: "نيمار جونيور", pos: "LW", rating: 89, photo: "Image/Neymar.Jr .webp" },
-            { name: "نيمار", pos: "LW", rating: 89, photo: "Image/Neymar.webp" },
-            { name: "ديكلان رايس", pos: "CDM", rating: 87, photo: "Image/Rice.webp" },
-            { name: "كريستيانو رونالدو", pos: "ST", rating: 91, photo: "Image/Ronaldo.jpeg" },
-            { name: "محمد صلاح", pos: "RW", rating: 89, photo: "Image/Salah.webp" },
-            { name: "سيرجيو راموس", pos: "CB", rating: 91, photo: "Image/SergioRamos.jpg" },
-            { name: "فان دايك", pos: "CB", rating: 89, photo: "Image/Vandijk.webp" },
-            { name: "فينيسيوس جونيور", pos: "LW", rating: 89, photo: "Image/vini.webp" },
-            { name: "زين الدين زيدان", pos: "CAM", rating: 96, photo: "Image/zidane.webp" }
+            { id: 1, name: "إمام عاشور", pos: "CM", rating: 78, photo: "Image/Ashour.webp" },
+            { id: 2, name: "جانلويجي بوفون", pos: "GK", rating: 91, photo: "Image/Buffon.webp" },
+            { id: 3, name: "يوهان كرويف", pos: "CF", rating: 95, photo: "Image/Cruyff.webp" },
+            { id: 4, name: "عثمان ديمبيلي", pos: "RW", rating: 86, photo: "Image/Demble.webp" },
+            { id: 5, name: "ديزيري دويه", pos: "CAM", rating: 78, photo: "Image/Doue.webp" },
+            { id: 6, name: "جيانلويجي دوناروما", pos: "GK", rating: 87, photo: "Image/Dounurema.webp" },
+            { id: 7, name: "باولو ديبالا", pos: "CAM", rating: 86, photo: "Image/Dybala.webp" },
+            { id: 8, name: "إرلينج هالاند", pos: "ST", rating: 91, photo: "Image/Haland.webp" },
+            { id: 9, name: "تيري هنري", pos: "ST", rating: 93, photo: "Image/Henry.webp" },
+            { id: 10, name: "لامين يامال", pos: "RW", rating: 81, photo: "Image/Lamine Yamal.webp" },
+            { id: 11, name: "رياض محرز", pos: "RW", rating: 85, photo: "Image/Mahrez.webp" },
+            { id: 12, name: "باولو مالديني", pos: "CB", rating: 94, photo: "Image/Maldini.webp" },
+            { id: 13, name: "كيليان إمبابي", pos: "ST", rating: 91, photo: "Image/Mappe.webp" },
+            { id: 14, name: "عمر مرموش", pos: "ST", rating: 83, photo: "Image/Marmoush.webp" },
+            { id: 15, name: "دييجو مارادونا", pos: "CAM", rating: 97, photo: "Image/Marodona.webp" },
+            { id: 16, name: "ليونيل ميسي", pos: "RW", rating: 92, photo: "Image/Messi.webp" },
+            { id: 17, name: "لوكا مودريتش", pos: "CM", rating: 87, photo: "Image/Modric.webp" },
+            { id: 18, name: "نيمار جونيور", pos: "LW", rating: 89, photo: "Image/Neymar.Jr .webp" },
+            { id: 19, name: "نيمار", pos: "LW", rating: 89, photo: "Image/Neymar.webp" },
+            { id: 20, name: "ديكلان رايس", pos: "CDM", rating: 87, photo: "Image/Rice.webp" },
+            { id: 21, name: "كريستيانو رونالدو", pos: "ST", rating: 91, photo: "Image/Ronaldo.jpeg" },
+            { id: 22, name: "محمد صلاح", pos: "RW", rating: 89, photo: "Image/Salah.webp" },
+            { id: 23, name: "سيرجيو راموس", pos: "CB", rating: 91, photo: "Image/SergioRamos.jpg" },
+            { id: 24, name: "فان دايك", pos: "CB", rating: 89, photo: "Image/Vandijk.webp" },
+            { id: 25, name: "فينيسيوس جونيور", pos: "LW", rating: 89, photo: "Image/vini.webp" },
+            { id: 26, name: "زين الدين زيدان", pos: "CAM", rating: 96, photo: "Image/zidane.webp" }
         ];
 
         let currentUser = "";
@@ -148,6 +173,7 @@
         let myTeam = [];
         let timerInterval = null;
         let currentAuctionData = null;
+        let isMaster = false; // يحدد من يدير السحب الأوتوماتيكي في الروم
 
         function joinGame(adminStatus) {
             const userIn = document.getElementById('username').value.trim();
@@ -170,26 +196,46 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
             }
 
-            // تسجيل التواجد بالروم
+            // تسجيل الحضور
             const userRef = db.ref(`rooms/${currentRoom}/users/${currentUser}`);
-            userRef.set({ name: currentUser, role: isAdmin ? "آدمن" : "مدرب" });
+            userRef.set({ name: currentUser, role: isAdmin ? "آدمن" : "لاعب", budget: 200, rating: 0 });
             userRef.onDisconnect().remove();
 
-            // الاستماع لأعضاء الروم
+            // تعيين أول شخص يدخل كـ Master لإدارة المزاد الأوتوماتيكي
+            db.ref(`rooms/${currentRoom}/master`).transaction(current => {
+                if (current === null) return currentUser;
+                return current;
+            }, (error, committed, snapshot) => {
+                if (snapshot.val() === currentUser) isMaster = true;
+            });
+
+            // الاستماع لأعضاء الغرفة
             db.ref(`rooms/${currentRoom}/users`).on('value', snapshot => {
                 const users = snapshot.val();
                 const container = document.getElementById('room-users');
                 if (users) {
-                    container.innerHTML = Object.values(users).map(u => `<span class="user-tag">${u.name} ${u.role === 'آدمن' ? '👑' : ''}</span>`).join('');
-                } else {
-                    container.innerHTML = 'لا يوجد أحد';
+                    container.innerHTML = Object.values(users).map(u => `<span class="user-tag">${u.name} (${u.role})</span>`).join('');
                 }
             });
 
-            // الاستماع للمزاد الحقيقي
+            // الاستماع للشات السريع
+            db.ref(`rooms/${currentRoom}/chat`).limitToLast(5).on('value', snapshot => {
+                const chats = snapshot.val();
+                const box = document.getElementById('chat-box');
+                box.innerHTML = '';
+                if (chats) {
+                    Object.values(chats).forEach(c => {
+                        box.innerHTML += `<div class="chat-msg"><b>${c.user}:</b> ${c.text}</div>`;
+                    });
+                    box.scrollTop = box.scrollHeight;
+                }
+            });
+
+            // الاستماع للمزاد
             db.ref(`rooms/${currentRoom}/auction`).on('value', snapshot => {
                 const data = snapshot.val();
                 currentAuctionData = data;
+                
                 if (data && data.active) {
                     document.getElementById('auction-area').classList.remove('hidden');
                     document.getElementById('player-name').innerText = data.player.name;
@@ -199,31 +245,58 @@
                     document.getElementById('highest-bid').innerText = data.highestBid;
                     document.getElementById('highest-bidder').innerText = data.highestBidder || 'لا أحد';
 
+                    // تعطيل الأزرار لو اللاعب هو أعلى مزايد أو ميزانيته لا تكفي
+                    const disableBids = (data.highestBidder === currentUser);
+                    toggleBidButtons(disableBids);
+
                     startTimer(data.endTime);
                 } else {
                     document.getElementById('auction-area').classList.add('hidden');
                     clearInterval(timerInterval);
+
+                    // لو المزاد غير نشط والجهاز هو الـ Master، شغّل المزاد التالي تلقائياً بعد 5 ثواني
+                    if (isMaster && (!data || !data.active)) {
+                        setTimeout(() => { triggerAutoAuction(); }, 5000);
+                    }
                 }
             });
         }
 
-        function startNextAuction() {
-            if (!isAdmin) return;
-            const randomPlayer = realAndIconPlayers[Math.floor(Math.random() * realAndIconPlayers.length)];
-            const timeSec = parseInt(document.getElementById('custom-timer').value) || 20;
-            const endTime = Date.now() + (timeSec * 1000);
+        function triggerAutoAuction() {
+            db.ref(`rooms/${currentRoom}/usedPlayers`).once('value', snapshot => {
+                const used = snapshot.val() || [];
+                const available = realAndIconPlayers.filter(p => !used.includes(p.id));
 
-            db.ref(`rooms/${currentRoom}/auction`).set({
-                player: randomPlayer,
-                highestBid: 0,
-                highestBidder: "",
-                endTime: endTime,
-                active: true
+                if (available.length === 0) {
+                    alert("انتهى المزاد! تم سحب جميع اللاعبين المتاحين 🎉");
+                    showLeaderboard();
+                    return;
+                }
+
+                const randomPlayer = available[Math.floor(Math.random() * available.length)];
+                const timeSec = 20;
+                const endTime = Date.now() + (timeSec * 1000);
+
+                // حفظ اللاعب المسحوب
+                db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, randomPlayer.id]);
+
+                // بدء المزاد الجديد
+                db.ref(`rooms/${currentRoom}/auction`).set({
+                    player: randomPlayer,
+                    highestBid: 0,
+                    highestBidder: "",
+                    endTime: endTime,
+                    active: true
+                });
             });
         }
 
         function placeBid(amount) {
             if (!currentAuctionData || !currentAuctionData.active) return;
+            if (currentAuctionData.highestBidder === currentUser) {
+                alert("أنت صاحب أعلى مزايدة حالياً!");
+                return;
+            }
 
             const newBid = currentAuctionData.highestBid + amount;
             if (newBid > myBudget) {
@@ -237,6 +310,12 @@
             });
         }
 
+        function toggleBidButtons(disable) {
+            [1, 5, 10, 20].forEach(val => {
+                document.getElementById(`btn-${val}`).disabled = disable;
+            });
+        }
+
         function startTimer(endTime) {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -246,7 +325,7 @@
 
                 if (left <= 0) {
                     clearInterval(timerInterval);
-                    if (isAdmin && currentAuctionData && currentAuctionData.active) {
+                    if (isMaster && currentAuctionData && currentAuctionData.active) {
                         endAuction();
                     }
                 }
@@ -264,26 +343,58 @@
             }
         }
 
-        // الاستماع للفائزين لتحديث التشكيلة
+        // تحديث التشكيلة والنتائج للفائزين
         db.ref(`rooms/${currentRoom}/winners`).on('child_added', snapshot => {
             const winData = snapshot.val();
             if (winData.winner === currentUser) {
                 myBudget -= winData.price;
                 myTeam.push(winData.player);
+                
+                // حساب متوسط التقييم
+                const avgRating = Math.round(myTeam.reduce((acc, p) => acc + p.rating, 0) / myTeam.length);
+
                 document.getElementById('budget').innerText = myBudget;
                 document.getElementById('team-count').innerText = myTeam.length;
+                document.getElementById('team-rating').innerText = avgRating;
 
+                // تحديث بيانات اللاعب في السيرفر
+                db.ref(`rooms/${currentRoom}/users/${currentUser}`).update({
+                    budget: myBudget,
+                    rating: avgRating,
+                    teamCount: myTeam.length
+                });
+
+                // عرض التشكيلة مقسمة بحسب المراكز
                 const teamDiv = document.getElementById('my-team');
-                teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag">${p.name} (${p.pos})</span>`).join('');
+                teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join('');
                 
                 confetti({ particleCount: 50, spread: 60 });
             }
         });
 
-        function finishMyAuction() {
-            alert(`تهانينا يا ${currentUser}! أنهيت المزاد بـ ${myTeam.length} لاعبين، والمتبقي من ميزانيتك: ${myBudget}M$`);
+        function sendChat(text) {
+            if (!currentRoom || !currentUser) return;
+            db.ref(`rooms/${currentRoom}/chat`).push({ user: currentUser, text: text });
+        }
+
+        function showLeaderboard() {
+            document.getElementById('leaderboard-screen').classList.remove('hidden');
+            db.ref(`rooms/${currentRoom}/users`).once('value', snapshot => {
+                const users = snapshot.val();
+                const list = document.getElementById('leaderboard-list');
+                list.innerHTML = '';
+                if (users) {
+                    const sorted = Object.values(users).sort((a,b) => (b.rating || 0) - (a.rating || 0));
+                    sorted.forEach((u, index) => {
+                        list.innerHTML += `<div class="chat-msg"><b>#${index+1} ${u.name}</b> - التقييم: ⭐${u.rating || 0} | الفلوس: 💰${u.budget}M$ | اللاعبين: ${u.teamCount || 0}</div>`;
+                    });
+                }
+            });
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboard-screen').classList.add('hidden');
         }
     </script>
 </body>
 </html>
-
