@@ -108,7 +108,7 @@
                     <button class="btn-bid" id="btn-20" onclick="placeBid(20)">+20M</button>
                 </div>
 
-                <!-- زر حسم الصفقة (يظهر للجميع طالما توجد مزايدة) -->
+                <!-- زر حسم الصفقة -->
                 <button id="btn-seal" onclick="sealDeal()" style="display:none; margin-top:6px; transition:0.3s;"></button>
             </div>
 
@@ -188,6 +188,7 @@
         let myTeam = [];
         let timerInterval = null;
         let currentAuctionData = null;
+        let lastHandledAuctionId = null;
 
         function joinGame(adminStatus) {
             const userIn = document.getElementById('username').value.trim();
@@ -210,7 +211,6 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
             }
 
-            // الاستماع لإعدادات الغرفة (الميزانية والوقت)
             db.ref(`rooms/${currentRoom}/settings`).on('value', snapshot => {
                 const settings = snapshot.val();
                 if (settings) {
@@ -259,7 +259,6 @@
                     document.getElementById('highest-bid').innerText = data.highestBid;
                     document.getElementById('highest-bidder').innerText = data.highestBidder || 'لا أحد';
 
-                    // تحديث وإظهار زر حسم الصفقة للجميع عند وجود أي مزايدة
                     const sealBtn = document.getElementById('btn-seal');
                     if (data.highestBid > 0) {
                         sealBtn.style.display = 'block';
@@ -313,6 +312,7 @@
                 db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, randomPlayer.id]);
 
                 db.ref(`rooms/${currentRoom}/auction`).set({
+                    id: Date.now(),
                     player: randomPlayer,
                     highestBid: 0,
                     highestBidder: "",
@@ -385,6 +385,7 @@
 
             if (winner) {
                 db.ref(`rooms/${currentRoom}/auctionResult`).set({
+                    auctionId: currentAuctionData.id || Date.now(),
                     winner: winner,
                     mainPlayer: mainPlayer,
                     price: price,
@@ -393,20 +394,20 @@
             }
         }
 
-        // معالجة نتيجة المزاد (التعويض والخصم)
+        // معالجة النتيجة بدقة وبدون تعارض
         db.ref(`rooms/${currentRoom}/auctionResult`).on('value', snapshot => {
             const res = snapshot.val();
-            if (!res || !currentAuctionData) return;
+            if (!res || res.auctionId === lastHandledAuctionId) return;
 
-            // إذا كنت أنت الفائز باللاعب الأساسي
+            lastHandledAuctionId = res.auctionId;
+
+            // الفائز بالمزاد يأخذ اللاعب الأساسي مباشرة وتتخصم منه الميزانية
             if (res.winner === currentUser) {
-                if (!myTeam.some(p => p.id === res.mainPlayer.id)) {
-                    myBudget -= res.price; // خصم الميزانية
-                    addPlayerToTeam(res.mainPlayer);
-                    sendChat(`🎉 فزت بـ ${res.mainPlayer.name} مقابل ${res.price}M$`);
-                }
+                myBudget -= res.price;
+                addPlayerToTeam(res.mainPlayer);
+                sendChat(`🎉 فزت بـ ${res.mainPlayer.name} مقابل ${res.price}M$`);
             } 
-            // إذا كنت لاعب آخر وخسرت المزاد، النظام يعوضك بلاعب عشوائي مجاناً!
+            // بقية اللاعبين الخاسرين يحصلون على لاعب تعويضي مجاني فوراً
             else if (res.winner && res.winner !== currentUser) {
                 db.ref(`rooms/${currentRoom}/usedPlayers`).once('value', snapshotUsed => {
                     const used = snapshotUsed.val() || [];
@@ -414,33 +415,36 @@
 
                     if (available.length > 0) {
                         const compensationPlayer = available[Math.floor(Math.random() * available.length)];
-                        
-                        if (!myTeam.some(p => p.id === compensationPlayer.id)) {
-                            addPlayerToTeam(compensationPlayer);
-                            db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, compensationPlayer.id]);
-                            sendChat(`🎁 تعويض النظام: حصلت على ${compensationPlayer.name} مجاناً!`);
-                        }
+                        addPlayerToTeam(compensationPlayer);
+                        db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, compensationPlayer.id]);
+                        sendChat(`🎁 تعويض النظام: حصلت على ${compensationPlayer.name} مجاناً!`);
                     }
                 });
             }
         });
 
         function addPlayerToTeam(player) {
+            // منع تكرار نفس اللاعب
+            if (myTeam.some(p => p.id === player.id)) return;
+
             myTeam.push(player);
             const avgRating = Math.round(myTeam.reduce((acc, p) => acc + p.rating, 0) / myTeam.length);
 
+            // تحديث واجهة المستخدم فوراً
             document.getElementById('budget').innerText = myBudget;
             document.getElementById('team-count').innerText = myTeam.length;
             document.getElementById('team-rating').innerText = avgRating;
 
+            // طباعة قائمة اللاعبين في التشكيلة بشكل مباشر
+            const teamDiv = document.getElementById('my-team');
+            teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join(' ');
+
+            // رفع البيانات المحدثة لقاعدة البيانات
             db.ref(`rooms/${currentRoom}/users/${currentUser}`).update({
                 budget: myBudget,
                 rating: avgRating,
                 teamCount: myTeam.length
             });
-
-            const teamDiv = document.getElementById('my-team');
-            teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join('');
             
             confetti({ particleCount: 50, spread: 60 });
         }
@@ -466,7 +470,6 @@
         }
 
         function closeLeaderboard() {
-            document.getElementById('leaderboard-screen').classList.hidden = true;
             document.getElementById('leaderboard-screen').classList.add('hidden');
         }
     </script>
