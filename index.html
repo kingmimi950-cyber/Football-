@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم والأيقونات - أوتوماتيك</title>
+    <title>مزاد النجوم والأيقونات</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --gold: #f59e0b; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; --red: #ef4444; }
@@ -46,11 +46,11 @@
 
         <!-- شاشة الدخول -->
         <div id="setup-screen" class="card">
-            <h3>⚽ دخول المزاد الأوتوماتيكي</h3>
-            <input type="text" id="username" placeholder="اسم اللاعب (مثال: محمد)">
+            <h3>⚽ دخول المزاد</h3>
+            <input type="text" id="username" placeholder="اسم اللاعب">
             <input type="text" id="room-code" placeholder="كود الغرفة">
             <button onclick="joinGame(false)">دخول كـ لاعب</button>
-            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن (للتحكم المباشر)</button>
+            <button onclick="joinGame(true)" style="background: var(--purple);">دخول كـ آدمن (متحكم)</button>
         </div>
 
         <!-- شاشة اللعبة -->
@@ -60,25 +60,25 @@
                 <span style="color:var(--green);">💰 <span id="budget">200</span>M$</span>
             </div>
 
-            <!-- قائمة المتواجدين -->
+            <!-- المتواجدون -->
             <div class="members-box">
                 <b>👥 المتواجدون بالروم:</b>
-                <div id="room-users" style="margin-top:4px;"><span style="color:#9ca3af;">جاري الاتصال...</span></div>
+                <div id="room-users" style="margin-top:4px;">جاري التحميل...</div>
             </div>
 
-            <!-- لوحة التحكم الاختيارية للآدمن -->
+            <!-- تحكم الآدمن -->
             <div id="admin-panel" class="card hidden" style="background:#1f2937;">
-                <button onclick="triggerAutoAuction()" style="background:var(--gold); color:#000;">🤖 بدء/تخطي الجولة أوتوماتيكياً</button>
+                <button onclick="startNextAuction()" style="background:var(--gold); color:#000;">🎯 سحب لاعب جديد للمزاد</button>
             </div>
 
-            <!-- كارت المزاد -->
+            <!-- منطقة المزاد -->
             <div id="auction-area" class="card hidden">
                 <div class="timer-badge">⏱️ المتبقي: <span id="timer">20</span>s</div>
                 <div class="fut-card">
                     <span id="player-pos" class="pos">--</span>
                     <div class="rating" id="player-rating">--</div>
                     <div class="player-avatar">
-                        <img id="player-img" src="" alt="لاعب" onerror="this.src='https://via.placeholder.com/110';">
+                        <img id="player-img" src="" alt="لاعب">
                     </div>
                     <div id="player-name" class="name">--</div>
                 </div>
@@ -96,7 +96,7 @@
                 </div>
             </div>
 
-            <!-- تفاعل الشات السريع -->
+            <!-- التفاعل والشات -->
             <div class="card" style="padding:6px;">
                 <small>💬 تفاعل سريع:</small>
                 <div class="chat-btn-grid">
@@ -116,29 +116,25 @@
                 <div id="my-team" style="margin-top:6px; text-align:right;">لا يوجد لاعبين بعد</div>
             </div>
 
-            <button onclick="showLeaderboard()" style="background:linear-gradient(135deg, #059669, #10b981); margin-top:10px;">🏆 عرض الترتيب المباشر</button>
+            <button onclick="showLeaderboard()" style="background:linear-gradient(135deg, #059669, #10b981); margin-top:10px;">🏆 الترتيب المباشر</button>
         </div>
 
         <!-- شاشة الترتيب -->
         <div id="leaderboard-screen" class="card hidden">
-            <h3>🏆 الترتيب النهائي للغرفة</h3>
+            <h3>🏆 الترتيب الحالي</h3>
             <div id="leaderboard-list"></div>
             <button onclick="closeLeaderboard()" style="background:var(--red); margin-top:10px;">إغلاق</button>
         </div>
     </div>
-    
+
     <script>
-        // رابط قاعدة البيانات الخاص بك تم تحديثه هنا بنجاح
         const firebaseConfig = {
             databaseURL: "https://football-game-2176c-default-rtdb.firebaseio.com"
         };
         
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // مصفوفة اللاعبين الكاملة
         const realAndIconPlayers = [
             { id: 1, name: "إمام عاشور", pos: "CM", rating: 78, photo: "Image/Ashour.webp" },
             { id: 2, name: "جانلويجي بوفون", pos: "GK", rating: 91, photo: "Image/Buffon.webp" },
@@ -175,7 +171,6 @@
         let myTeam = [];
         let timerInterval = null;
         let currentAuctionData = null;
-        let isMaster = false;
 
         function joinGame(adminStatus) {
             const userIn = document.getElementById('username').value.trim();
@@ -198,29 +193,23 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
             }
 
-            // تسجيل الحضور
+            // تسجيل المستخدم في الفايربيس
             const userRef = db.ref(`rooms/${currentRoom}/users/${currentUser}`);
             userRef.set({ name: currentUser, role: isAdmin ? "آدمن" : "لاعب", budget: 200, rating: 0 });
             userRef.onDisconnect().remove();
 
-            // تعيين أول شخص يدخل كـ Master لإدارة المزاد الأوتوماتيكي
-            db.ref(`rooms/${currentRoom}/master`).transaction(current => {
-                if (current === null) return currentUser;
-                return current;
-            }, (error, committed, snapshot) => {
-                if (snapshot.val() === currentUser) isMaster = true;
-            });
-
-            // الاستماع لأعضاء الغرفة
+            // الاستماع للمتواجدين
             db.ref(`rooms/${currentRoom}/users`).on('value', snapshot => {
                 const users = snapshot.val();
                 const container = document.getElementById('room-users');
                 if (users) {
                     container.innerHTML = Object.values(users).map(u => `<span class="user-tag">${u.name} (${u.role})</span>`).join('');
+                } else {
+                    container.innerHTML = "لا يوجد لاعبين";
                 }
             });
 
-            // الاستماع للشات السريع
+            // الاستماع للشات
             db.ref(`rooms/${currentRoom}/chat`).limitToLast(5).on('value', snapshot => {
                 const chats = snapshot.val();
                 const box = document.getElementById('chat-box');
@@ -247,6 +236,7 @@
                     document.getElementById('highest-bid').innerText = data.highestBid;
                     document.getElementById('highest-bidder').innerText = data.highestBidder || 'لا أحد';
 
+                    // تعطيل الأزرار إذا كان اللاعب هو صاحب أعلى مزايدة
                     const disableBids = (data.highestBidder === currentUser);
                     toggleBidButtons(disableBids);
 
@@ -254,28 +244,22 @@
                 } else {
                     document.getElementById('auction-area').classList.add('hidden');
                     clearInterval(timerInterval);
-
-                    if (isMaster && (!data || !data.active)) {
-                        setTimeout(() => { triggerAutoAuction(); }, 5000);
-                    }
                 }
             });
         }
 
-        function triggerAutoAuction() {
+        function startNextAuction() {
             db.ref(`rooms/${currentRoom}/usedPlayers`).once('value', snapshot => {
                 const used = snapshot.val() || [];
                 const available = realAndIconPlayers.filter(p => !used.includes(p.id));
 
                 if (available.length === 0) {
-                    alert("انتهى المزاد! تم سحب جميع اللاعبين المتاحين 🎉");
-                    showLeaderboard();
+                    alert("انتهى المزاد! تم سحب جميع اللاعبين المتاحين.");
                     return;
                 }
 
                 const randomPlayer = available[Math.floor(Math.random() * available.length)];
-                const timeSec = 20;
-                const endTime = Date.now() + (timeSec * 1000);
+                const endTime = Date.now() + (20 * 1000);
 
                 db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, randomPlayer.id]);
 
@@ -291,14 +275,11 @@
 
         function placeBid(amount) {
             if (!currentAuctionData || !currentAuctionData.active) return;
-            if (currentAuctionData.highestBidder === currentUser) {
-                alert("أنت صاحب أعلى مزايدة حالياً!");
-                return;
-            }
+            if (currentAuctionData.highestBidder === currentUser) return;
 
             const newBid = currentAuctionData.highestBid + amount;
             if (newBid > myBudget) {
-                alert("ميزانيتك لا تكفي لهذه المزايدة!");
+                alert("ميزانيتك لا تكفي!");
                 return;
             }
 
@@ -323,7 +304,7 @@
 
                 if (left <= 0) {
                     clearInterval(timerInterval);
-                    if (isMaster && currentAuctionData && currentAuctionData.active) {
+                    if (isAdmin && currentAuctionData && currentAuctionData.active) {
                         endAuction();
                     }
                 }
@@ -341,29 +322,32 @@
             }
         }
 
-        // تحديث التشكيلة
+        // استقبال الفائز باللاعب
         db.ref(`rooms/${currentRoom}/winners`).on('child_added', snapshot => {
             const winData = snapshot.val();
             if (winData.winner === currentUser) {
-                myBudget -= winData.price;
-                myTeam.push(winData.player);
-                
-                const avgRating = Math.round(myTeam.reduce((acc, p) => acc + p.rating, 0) / myTeam.length);
+                // منع التكرار
+                if (!myTeam.some(p => p.id === winData.player.id)) {
+                    myBudget -= winData.price;
+                    myTeam.push(winData.player);
+                    
+                    const avgRating = Math.round(myTeam.reduce((acc, p) => acc + p.rating, 0) / myTeam.length);
 
-                document.getElementById('budget').innerText = myBudget;
-                document.getElementById('team-count').innerText = myTeam.length;
-                document.getElementById('team-rating').innerText = avgRating;
+                    document.getElementById('budget').innerText = myBudget;
+                    document.getElementById('team-count').innerText = myTeam.length;
+                    document.getElementById('team-rating').innerText = avgRating;
 
-                db.ref(`rooms/${currentRoom}/users/${currentUser}`).update({
-                    budget: myBudget,
-                    rating: avgRating,
-                    teamCount: myTeam.length
-                });
+                    db.ref(`rooms/${currentRoom}/users/${currentUser}`).update({
+                        budget: myBudget,
+                        rating: avgRating,
+                        teamCount: myTeam.length
+                    });
 
-                const teamDiv = document.getElementById('my-team');
-                teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join('');
-                
-                confetti({ particleCount: 50, spread: 60 });
+                    const teamDiv = document.getElementById('my-team');
+                    teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join('');
+                    
+                    confetti({ particleCount: 50, spread: 60 });
+                }
             }
         });
 
