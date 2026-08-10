@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مزاد النجوم والأيقونات</title>
+    <title>مزاد النجوم والأيقونات v2</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --gold: #f59e0b; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; --red: #ef4444; }
@@ -46,7 +46,7 @@
 
         <!-- شاشة الدخول -->
         <div id="setup-screen" class="card">
-            <h3>⚽ دخول المزاد</h3>
+            <h3>⚽ دخول المزاد المباشر</h3>
             <input type="text" id="username" placeholder="اسم اللاعب">
             <input type="text" id="room-code" placeholder="كود الغرفة">
             <button onclick="joinGame(false)">دخول كـ لاعب</button>
@@ -63,7 +63,7 @@
             <!-- المتواجدون -->
             <div class="members-box">
                 <b>👥 المتواجدون بالروم:</b>
-                <div id="room-users" style="margin-top:4px;">جاري التحميل...</div>
+                <div id="room-users" style="margin-top:4px;">جاري الاتصال...</div>
             </div>
 
             <!-- تحكم الآدمن -->
@@ -193,12 +193,10 @@
                 document.getElementById('admin-panel').classList.remove('hidden');
             }
 
-            // تسجيل المستخدم في الفايربيس
             const userRef = db.ref(`rooms/${currentRoom}/users/${currentUser}`);
             userRef.set({ name: currentUser, role: isAdmin ? "آدمن" : "لاعب", budget: 200, rating: 0 });
             userRef.onDisconnect().remove();
 
-            // الاستماع للمتواجدين
             db.ref(`rooms/${currentRoom}/users`).on('value', snapshot => {
                 const users = snapshot.val();
                 const container = document.getElementById('room-users');
@@ -209,7 +207,6 @@
                 }
             });
 
-            // الاستماع للشات
             db.ref(`rooms/${currentRoom}/chat`).limitToLast(5).on('value', snapshot => {
                 const chats = snapshot.val();
                 const box = document.getElementById('chat-box');
@@ -222,7 +219,6 @@
                 }
             });
 
-            // الاستماع للمزاد
             db.ref(`rooms/${currentRoom}/auction`).on('value', snapshot => {
                 const data = snapshot.val();
                 currentAuctionData = data;
@@ -236,7 +232,6 @@
                     document.getElementById('highest-bid').innerText = data.highestBid;
                     document.getElementById('highest-bidder').innerText = data.highestBidder || 'لا أحد';
 
-                    // تعطيل الأزرار إذا كان اللاعب هو صاحب أعلى مزايدة
                     const disableBids = (data.highestBidder === currentUser);
                     toggleBidButtons(disableBids);
 
@@ -322,11 +317,9 @@
             }
         }
 
-        // استقبال الفائز باللاعب
         db.ref(`rooms/${currentRoom}/winners`).on('child_added', snapshot => {
             const winData = snapshot.val();
             if (winData.winner === currentUser) {
-                // منع التكرار
                 if (!myTeam.some(p => p.id === winData.player.id)) {
                     myBudget -= winData.price;
                     myTeam.push(winData.player);
