@@ -126,9 +126,11 @@
             <button onclick="closeLeaderboard()" style="background:var(--red); margin-top:10px;">إغلاق</button>
         </div>
     </div>
+    
     <script>
+        // رابط قاعدة البيانات الخاص بك تم تحديثه هنا بنجاح
         const firebaseConfig = {
-            databaseURL: "https://realtime-fae37-default-rtdb.firebaseio.com"
+            databaseURL: "https://football-game-2176c-default-rtdb.firebaseio.com"
         };
         
         if (!firebase.apps.length) {
@@ -173,7 +175,7 @@
         let myTeam = [];
         let timerInterval = null;
         let currentAuctionData = null;
-        let isMaster = false; // يحدد من يدير السحب الأوتوماتيكي في الروم
+        let isMaster = false;
 
         function joinGame(adminStatus) {
             const userIn = document.getElementById('username').value.trim();
@@ -245,7 +247,6 @@
                     document.getElementById('highest-bid').innerText = data.highestBid;
                     document.getElementById('highest-bidder').innerText = data.highestBidder || 'لا أحد';
 
-                    // تعطيل الأزرار لو اللاعب هو أعلى مزايد أو ميزانيته لا تكفي
                     const disableBids = (data.highestBidder === currentUser);
                     toggleBidButtons(disableBids);
 
@@ -254,7 +255,6 @@
                     document.getElementById('auction-area').classList.add('hidden');
                     clearInterval(timerInterval);
 
-                    // لو المزاد غير نشط والجهاز هو الـ Master، شغّل المزاد التالي تلقائياً بعد 5 ثواني
                     if (isMaster && (!data || !data.active)) {
                         setTimeout(() => { triggerAutoAuction(); }, 5000);
                     }
@@ -277,10 +277,8 @@
                 const timeSec = 20;
                 const endTime = Date.now() + (timeSec * 1000);
 
-                // حفظ اللاعب المسحوب
                 db.ref(`rooms/${currentRoom}/usedPlayers`).set([...used, randomPlayer.id]);
 
-                // بدء المزاد الجديد
                 db.ref(`rooms/${currentRoom}/auction`).set({
                     player: randomPlayer,
                     highestBid: 0,
@@ -343,28 +341,25 @@
             }
         }
 
-        // تحديث التشكيلة والنتائج للفائزين
+        // تحديث التشكيلة
         db.ref(`rooms/${currentRoom}/winners`).on('child_added', snapshot => {
             const winData = snapshot.val();
             if (winData.winner === currentUser) {
                 myBudget -= winData.price;
                 myTeam.push(winData.player);
                 
-                // حساب متوسط التقييم
                 const avgRating = Math.round(myTeam.reduce((acc, p) => acc + p.rating, 0) / myTeam.length);
 
                 document.getElementById('budget').innerText = myBudget;
                 document.getElementById('team-count').innerText = myTeam.length;
                 document.getElementById('team-rating').innerText = avgRating;
 
-                // تحديث بيانات اللاعب في السيرفر
                 db.ref(`rooms/${currentRoom}/users/${currentUser}`).update({
                     budget: myBudget,
                     rating: avgRating,
                     teamCount: myTeam.length
                 });
 
-                // عرض التشكيلة مقسمة بحسب المراكز
                 const teamDiv = document.getElementById('my-team');
                 teamDiv.innerHTML = myTeam.map(p => `<span class="player-tag"><b>${p.pos}</b>: ${p.name} (${p.rating})</span>`).join('');
                 
