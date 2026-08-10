@@ -283,43 +283,29 @@
                 }
             });
 
-            // قراءة النتيجة الحالية لتجنب التكرار والتداخل عند الدخول
+            // قراءة آخر نتيجة مزاد لتفادي تنفيذ الأحداث القديمة
             db.ref(`rooms/${currentRoom}/auctionResult`).once('value', snapshot => {
                 const res = snapshot.val();
                 if (res) lastHandledAuctionId = res.auctionId;
 
-                // الاستماع لنتائج المزادات القادمة دون تداخل
+                // الاستماع المباشر للتغييرات
                 db.ref(`rooms/${currentRoom}/auctionResult`).on('value', snapshotRes => {
                     const resData = snapshotRes.val();
                     if (!resData || resData.auctionId === lastHandledAuctionId) return;
 
                     lastHandledAuctionId = resData.auctionId;
 
+                    // 1. إذا كنت الفائز بالمزاد الرئيسي
                     if (resData.winner === currentUser) {
                         myBudget -= resData.price;
                         addPlayerToTeam(resData.mainPlayer);
                         sendChat(`🎉 فزت بـ ${resData.mainPlayer.name} مقابل ${resData.price}M$`);
                     } 
-                    else if (resData.winner && resData.winner !== currentUser) {
-                        db.ref(`rooms/${currentRoom}/usedPlayers`).once('value', snapshotUsed => {
-                            const used = snapshotUsed.val() || [];
-                            const available = realAndIconPlayers.filter(p => !used.includes(p.id));
-
-                            if (available.length > 0) {
-                                const compensationPlayer = available[Math.floor(Math.random() * available.length)];
-                                
-                                db.ref(`rooms/${currentRoom}/usedPlayers`).transaction(currentUsed => {
-                                    currentUsed = currentUsed || [];
-                                    if (!currentUsed.includes(compensationPlayer.id)) {
-                                        currentUsed.push(compensationPlayer.id);
-                                    }
-                                    return currentUsed;
-                                });
-
-                                addPlayerToTeam(compensationPlayer);
-                                sendChat(`🎁 تعويض النظام: حصلت على ${compensationPlayer.name} مجاناً!`);
-                            }
-                        });
+                    // 2. إذا كنت خاسر في المزاد (ولست الآدمن)، استلم اللاعب التعويضي المحدد لك
+                    else if (!isAdmin && resData.loserCompensations && resData.loserCompensations[currentUser]) {
+                        const compPlayer = resData.loserCompensations[currentUser];
+                        addPlayerToTeam(compPlayer);
+                        sendChat(`🎁 تعويض: حصلت على ${compPlayer.name}!`);
                     }
                 });
             });
@@ -430,30 +416,45 @@
             const mainPlayer = currentAuctionData.player;
             const price = currentAuctionData.highestBid;
 
-            if (winner) {
-                db.ref(`rooms/${currentRoom}/auctionResult`).set({
-                    auctionId: currentAuctionData.id || Date.now(),
-                    winner: winner,
-                    mainPlayer: mainPlayer,
-                    price: price,
-                    timestamp: Date.now()
-                });
-            } else {
-                db.ref(`rooms/${currentRoom}/auctionResult`).set({
-                    auctionId: currentAuctionData.id || Date.now(),
-                    winner: null,
-                    mainPlayer: mainPlayer,
-                    price: 0,
-                    timestamp: Date.now()
-                });
-            }
+            // الآدمن يتولى توزيع اللاعبين بدقة
+            db.ref(`rooms/${currentRoom}`).once('value', snapshotRoom => {
+                const roomData = snapshotRoom.val() || {};
+                const users = roomData.users || {};
+                const used = roomData.usedPlayers || [];
+                
+                let available = realAndIconPlayers.filter(p => !used.includes(p.id));
+                let loserCompensations = {};
 
-            // تشغيل اللاعب الجديد تلقائياً بعد انتهاء المزاد بـ 3 ثواني (عبر الآدمن)
-            if (isAdmin) {
+                // إيجاد اللاعبين العاديين الخاسرين لتوزيع التعويضات عليهم
+                Object.keys(users).forEach(uName => {
+                    const uObj = users[uName];
+                    if (uObj.role !== "آدمن" && uName !== winner && available.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * available.length);
+                        const compPlayer = available[randomIndex];
+                        
+                        loserCompensations[uName] = compPlayer;
+                        used.push(compPlayer.id);
+                        available.splice(randomIndex, 1);
+                    }
+                });
+
+                // تحديث المستخدمين والنتيجة في قاعدة البيانات
+                db.ref(`rooms/${currentRoom}/usedPlayers`).set(used);
+
+                db.ref(`rooms/${currentRoom}/auctionResult`).set({
+                    auctionId: currentAuctionData.id || Date.now(),
+                    winner: winner || null,
+                    mainPlayer: mainPlayer,
+                    price: price || 0,
+                    loserCompensations: loserCompensations,
+                    timestamp: Date.now()
+                });
+
+                // بدء اللاعب التالي بعد 3 ثواني تلقائياً
                 setTimeout(() => {
                     startNextAuction();
                 }, 3000);
-            }
+            });
         }
 
         function addPlayerToTeam(player) {
@@ -492,7 +493,7 @@
                 if (users) {
                     const sorted = Object.values(users).sort((a,b) => (b.rating || 0) - (a.rating || 0));
                     sorted.forEach((u, index) => {
-                        list.innerHTML += `<div class="chat-msg"><b>#${index+1} ${u.name}</b> - التقييم: ⭐${u.rating || 0} | الفلوس: 💰${u.budget}M$ | اللاعبين: ${u.teamCount || 0}</div>`;
+                        list.innerHTML += `<div class="chat-msg"><b>#${index+1} ${u.name}</b> (${u.role}) - ⭐${u.rating || 0} | 💰${u.budget}M$ | 👟${u.teamCount || 0}</div>`;
                     });
                 }
             });
